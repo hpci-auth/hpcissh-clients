@@ -1,5 +1,10 @@
 # Release note for hpcissh-clients
 
+## version 1.9 (2024-02-21)
+
+- Update feature
+  - "WARNING: Failed to find your remote username" is no longer reported
+
 ## version 1.8 (2023-12-19)
 
 - Update feature

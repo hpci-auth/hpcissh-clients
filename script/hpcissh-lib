@@ -461,7 +461,8 @@ convert_ssh_arg() {
 	fi
     done
     if ! $found; then
-       warning_not_found_localacc
+        #warning_not_found_localacc
+        DEBUG "unknown hpcissh server"
     fi
     print_args "${ARGV[@]}"
 }
@@ -551,7 +552,8 @@ convert_scp_arg() {
 	fi
     done
     if ! $found; then
-       warning_not_found_localacc
+        #warning_not_found_localacc
+        DEBUG "unknown hpcissh server"
     fi
     print_args "${ARGV[@]}"
 }
@@ -601,7 +603,8 @@ convert_sftp_arg() {
 	fi
     fi
     if ! $found; then
-       warning_not_found_localacc
+        #warning_not_found_localacc
+        DEBUG "unknown hpcissh server"
     fi
     print_args "${ARGV[@]}"
 }
