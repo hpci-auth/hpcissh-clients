@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -eu
+
+CMD_ABS_PATH=`realpath $(which ${0})`
+PARENT_DIR=`dirname ${CMD_ABS_PATH}`
+source ${PARENT_DIR}/hpcissh-lib
+
+print_version

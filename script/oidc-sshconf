@@ -1,0 +1,39 @@
+#!/bin/bash
+
+set -eu
+
+CMD_ABS_PATH=`realpath $(which ${0})`
+PARENT_DIR=`dirname ${CMD_ABS_PATH}`
+source ${PARENT_DIR}/hpcissh-lib
+
+load_common_config
+
+usage() {
+    echo "Usage: ${0} <issuer> <scopes> <audience> <conf name>"
+}
+
+if [ ${#} -ne 4 ];
+then
+    usage
+    exit 1
+fi
+
+if [ -z "${OIDC_SOCK:-}" ];
+then
+    ERROR "can't communicate to oidc-agent."
+    exit 1
+fi
+
+ISSUER=${1}
+SCOPES=${2}
+AUDIENCE=${3}
+CONF_NAME=${4}
+load_conf "${ISSUER}" "${SCOPES}" "${AUDIENCE}" "${CONF_NAME}"
+ret=$?
+
+if [ "$CONF_NAME" != "$OIDC_AGENT_CONF_NAME" ]; then
+    echo "Please set an environment variable."
+    echo "OIDC_AGENT_CONF_NAME=${CONF_NAME}; export OIDC_AGENT_CONF_NAME;"
+fi
+
+exit $ret

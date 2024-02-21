@@ -1,0 +1,30 @@
+#!/bin/bash
+
+set -eu
+
+CMD_ABS_PATH=`realpath $(which ${0})`
+PARENT_DIR=`dirname ${CMD_ABS_PATH}`
+source ${PARENT_DIR}/hpcissh-lib
+
+usage() {
+    echo "Usage: ${0} [sftp command option] host"
+}
+
+init_common "${@}"
+get_token
+
+RAW_ARGV=("sftp")
+RAW_ARGV+=("${@}")
+
+ARGV=()
+for arg in `convert_sftp_arg "${RAW_ARGV[@]}"`; do
+    ARGV+=("$arg")
+done
+ARGV=("${ARGV[@]:1}")
+
+set +e
+runssh sftp -P ${HPCISSH_PORT} ${SSH_BASIC_OPTS} "${ARGV[@]}"
+RESULT=${?}
+verify_hostname $RESULT
+set -e
+exit $RESULT

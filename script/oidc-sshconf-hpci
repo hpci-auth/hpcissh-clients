@@ -1,0 +1,22 @@
+#!/bin/bash
+
+set -eu
+
+CMD_ABS_PATH=`realpath $(which ${0})`
+PARENT_DIR=`dirname ${CMD_ABS_PATH}`
+source ${PARENT_DIR}/hpcissh-lib
+
+load_common_config
+
+ISSUER=${OIDC_ISSUER}
+SCOPES="openid hpci offline_access scitokens"
+AUDIENCE="hpci"
+
+if [ ${#} -eq 0 ];
+then
+    CONF_NAME="hpci"
+else
+    CONF_NAME=${1}
+fi
+
+oidc-sshconf "${ISSUER}" "${SCOPES}" "${AUDIENCE}" "${CONF_NAME}"

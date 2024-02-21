@@ -1,0 +1,118 @@
+#!/bin/bash
+
+DEBUG=false
+
+set -eu
+CMD_ABS_PATH=`realpath $(which ${0})`
+PARENT_DIR=`dirname ${CMD_ABS_PATH}`
+source "${PARENT_DIR}/hpcissh-lib"
+
+declare -A FQDN2USERNAME=(
+    ["host1"]="user1"
+    ["host2"]="user2"
+)
+
+# override the function in hpcissh-lib
+get_local_account() {
+    set +u
+    val="${FQDN2USERNAME[$1]}"
+    set -u
+    echo $val
+}
+
+# override the function in hpcissh-lib
+print_args() {
+    local ARGV=("$@")
+    local first=true
+    local arg
+    for arg in "${ARGV[@]}"; do
+	if $first; then
+	    first=false
+	else
+	    echo -n " "
+	fi
+	if [[ $arg == *" "* ]]; then
+	    echo -n "\"$arg\""
+	else
+	    echo -n "$arg"
+	fi
+    done
+    echo
+}
+
+test_common() {
+    local func="$1"
+    shift
+    local expect="$1"
+    shift
+    local result=`$func "$@"`
+    if [ "$expect" = "$result" ]; then
+	echo "PASS: $@ ==> $expect"
+    else
+	echo "FAIL: $expect != $result"
+	NG=$((NG + 1))
+    fi
+}
+
+test_convert_ssh_arg() {
+    test_common convert_ssh_arg "$@"
+}
+
+test_convert_scp_arg() {
+    test_common convert_scp_arg "$@"
+}
+
+test_convert_sftp_arg() {
+    test_common convert_sftp_arg "$@"
+}
+
+load_common_config
+
+NG=0
+test_convert_ssh_arg "ssh user1@host1" ssh host1
+test_convert_ssh_arg "ssh -v user1@host1" ssh -v host1
+test_convert_ssh_arg "ssh -p 2222 user1@host1" ssh -p 2222 host1
+test_convert_ssh_arg "ssh unknown@host1" ssh unknown@host1
+test_convert_ssh_arg "ssh unknownhost" ssh unknownhost
+test_convert_ssh_arg "ssh -v user2@host2 ls -l" ssh -v host2 ls -l
+test_convert_ssh_arg "ssh -l test1 user1@host1" ssh -l test1 host1
+test_convert_ssh_arg "ssh user1@host1 -l test1" ssh host1 -l test1
+test_convert_ssh_arg "ssh -v user1@host1 -l test1" ssh -v host1 -l test1
+test_convert_ssh_arg "ssh -l test1 -v user1@host1" ssh -l test1 -v host1
+
+# misidentification (Due to lack of understanding of ssh specifications)
+#EXPECT:
+#test_convert_ssh_arg "ssh -l host1 -v user2@host2 ls" ssh -l host1 -v host2 ls
+test_convert_ssh_arg "ssh -l user1@host1 -v host2 ls" ssh -l host1 -v host2 ls
+
+test_convert_scp_arg "scp localf1 localf2" scp localf1 localf2
+test_convert_scp_arg "scp dir user1@host1:" scp dir host1:
+test_convert_scp_arg "scp dir@host1 user1@host1:" scp dir@host1 host1:
+test_convert_scp_arg "scp -P 2222 dir user1@host1:" scp -P 2222 dir host1:
+test_convert_scp_arg 'scp "a b c" user1@host1:' scp "a b c" host1:
+test_convert_scp_arg 'scp "user1@host1:a b" "c d"' scp "host1:a b" "c d"
+test_convert_scp_arg "scp -pr dir user1@host1:" scp -pr dir host1:
+test_convert_scp_arg "scp -v user2@host2:file ." scp -v host2:file .
+test_convert_scp_arg "scp dir unknown@host1:" scp dir unknown@host1:
+test_convert_scp_arg "scp unknown@host1:dir ." scp unknown@host1:dir .
+test_convert_scp_arg "scp user2@host2:file@host1 ." scp host2:file@host1 .
+test_convert_scp_arg "scp user1@host1:a user2@host2:b dir" scp host1:a host2:b dir
+test_convert_scp_arg "scp -3 user1@host1:a user2@host2:b dir" scp -3 host1:a host2:b dir
+test_convert_scp_arg "scp user1@host1:a user2@host2:b c dir" scp host1:a host2:b c dir
+test_convert_scp_arg "scp -v user1@host1:a user2@host2:b host3:c dir" scp -v host1:a host2:b host3:c dir
+test_convert_scp_arg "INVALID SYNTAX" scp
+test_convert_scp_arg "INVALID SYNTAX" scp file
+
+test_convert_sftp_arg "sftp user1@host1" sftp host1
+test_convert_sftp_arg "sftp -v user1@host1" sftp -v host1
+test_convert_sftp_arg "sftp -P 2222 user1@host1" sftp -P 2222 host1
+test_convert_sftp_arg "sftp unknown@host1" sftp unknown@host1
+test_convert_sftp_arg "sftp user2@host2:file" sftp host2:file
+test_convert_sftp_arg "sftp user2@host2:file file" sftp host2:file file
+test_convert_sftp_arg 'sftp "user2@host2:a b"' sftp "host2:a b"
+test_convert_sftp_arg 'sftp "user2@host2:a b" "c d"' sftp "host2:a b" "c d"
+test_convert_sftp_arg "INVALID SYNTAX" sftp
+
+if [ $NG -gt 0 ]; then
+    exit 1
+fi

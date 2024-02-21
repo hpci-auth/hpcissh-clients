@@ -1,0 +1,81 @@
+#!/bin/bash
+
+set -eu
+
+CMD_ABS_PATH=`realpath $(which ${0})`
+PARENT_DIR=`dirname ${CMD_ABS_PATH}`
+source ${PARENT_DIR}/hpcissh-lib
+
+PROGNAME=`basename $0`
+
+usage() {
+    echo "Usage: ${0} [ssh command option] [user@]hostname [command]"
+}
+
+init_common "${@}"
+get_token
+
+RAW_ARGV=("ssh")
+RAW_ARGV+=("${@}")
+
+ARGV=()
+for arg in `convert_ssh_arg "${RAW_ARGV[@]}"`; do
+    ARGV+=("$arg")
+done
+ARGV=("${ARGV[@]:1}")
+
+DEBUG "ARGV=${ARGV[@]}"
+
+for i in `seq 1 ${#}`;
+do
+    set +e
+    INDEX=`expr ${i} - 1`
+    echo -n ${ARGV[${INDEX}]} | grep -E '^'${PROGNAME}'$' > /dev/null
+    RESULT=${?}
+    set -e
+    if [ ${RESULT} -eq 0 ];
+    then
+        SSH_OPTS="${SSH_OPTS} -t"
+        break;
+    fi
+
+    set +e
+    echo -n ${ARGV[${INDEX}]} | grep -E '^.*/'${PROGNAME}'$' > /dev/null
+    RESULT=${?}
+    set -e
+    if [ ${RESULT} -eq 0 ];
+    then
+        SSH_OPTS="${SSH_OPTS} -t"
+        break;
+    fi
+done
+
+if [ -n "${OIDC_SOCK:-}" ];
+then  # use oidc-agent
+    if [ "${OIDC_AGENT_FORWARD}" == "yes" ];
+    then
+	#SUB_CLAIM=`jwt decode ${OIDC_AT} | grep '"sub":' | awk '{ print $2 }' | sed -e 's/[",]//g'`
+	SUB_CLAIM=`decode_jwt | jq | grep '"sub":' | awk '{ print $2 }' | sed -e 's/[",]//g'`
+
+        # hpcissh have to forward oidc-agent's unix domain socket to /tmp
+        # on remote host as ssh can't create a parent directory of
+        # forwarded unix domain socket
+        REMOTE_OIDC_SOCK=`mktemp -u /tmp/oidc-agent.${SUB_CLAIM}.XXXXXXXXXXXX.sock`
+        REMOTE_FORWARD="-R ${REMOTE_OIDC_SOCK}:${OIDC_SOCK}"
+        SSH_OPTS="${SSH_OPTS} ${REMOTE_FORWARD} -o SendEnv=OIDC_SOCK"
+        OIDC_SOCK=${REMOTE_OIDC_SOCK}
+    fi
+    SSH_OPTS="${SSH_OPTS} -o SendEnv=OIDC_AGENT_CONF_NAME"
+fi
+
+SSH_OPTS="${SSH_OPTS} -p ${HPCISSH_PORT}"
+
+set +e
+runssh ssh ${SSH_OPTS} "${ARGV[@]}"
+RESULT=${?}
+verify_hostname $RESULT
+#if [ ${RESULT} -eq 6 ]; then
+#    ssh ${SSH_OPTS} "${ARGV[@]}"
+#fi
+set -e
+exit $RESULT
