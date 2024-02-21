@@ -4,6 +4,7 @@
 
 - Update feature
   - OIDC_USERINFO_EXPIRE: change default value (1800 sec.)
+  - report error message from curl command
   - "WARNING: Failed to find your remote username" is no longer reported
 
 ## version 1.8 (2023-12-19)

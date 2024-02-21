@@ -13,6 +13,11 @@ declare -A FQDN2USERNAME=(
 )
 
 # override the function in hpcissh-lib
+load_local_accounts() {
+    :
+}
+
+# override the function in hpcissh-lib
 get_local_account() {
     set +u
     val="${FQDN2USERNAME[$1]}"

@@ -209,33 +209,44 @@ init_common() {
 }
 
 print_userinfo() {
-    curl -s -H GET "$OIDC_USERINFO_ENDPOINT" \
+    curl -LfsS -H GET "$OIDC_USERINFO_ENDPOINT" \
          -H 'Content-Type:application/json;charset=utf-8' \
          -H "Authorization: Bearer $OIDC_AT"
 }
 
-get_local_accounts_json() {
+check_and_print_local_accounts() {
+    local HPCISSH_LOCAL_ACCOUNTS="$1"
+
+    #if jq -e '.["local-accounts"]' "$HPCISSH_LOCAL_ACCOUNTS"; then
+    if grep -q \"local-accounts\" "$HPCISSH_LOCAL_ACCOUNTS"; then
+        # valid
+        cat "$HPCISSH_LOCAL_ACCOUNTS"  # output
+        DEBUG "USE cached userinfo"
+        return
+    else
+        # invalid file
+        local info
+        info=$(cat "$HPCISSH_LOCAL_ACCOUNTS")
+        WARN "Invalid userinfo from $OIDC_USERINFO_ENDPOINT: $info"
+        # rm -f "$HPCISSH_LOCAL_ACCOUNTS"
+        # DEBUG "DELETE invalid cached userinfo"
+        echo ""  # output
+        return
+    fi
+}
+
+fetch_local_accounts_json() {
+    set -eu
     local USE_CACHE="$1"
     local token
 
     if $USE_CACHE; then
         if [ -f "$HPCISSH_LOCAL_ACCOUNTS" ]; then
-            if jq -e '.["local-accounts"]' "$HPCISSH_LOCAL_ACCOUNTS"; then
-                # valid
-                cat "$HPCISSH_LOCAL_ACCOUNTS"
-                DEBUG "USE cached userinfo"
-                return
-            else
-                # invalid file
-                rm -f "$HPCISSH_LOCAL_ACCOUNTS"
-                DEBUG "DELETE invalid cached userinfo"
-                echo ""  # return
-                return
-            fi
+            check_and_print_local_accounts "$HPCISSH_LOCAL_ACCOUNTS"
+            return 0
         else
             DEBUG "NO cached userinfo"
-            echo ""  # return
-            return
+            # FALLTHROUGH
         fi
     fi
     local tmpfile
@@ -245,12 +256,12 @@ get_local_accounts_json() {
     DEBUG "DOWNLOAD userinfo"
     if print_userinfo > $tmpfile; then
         mv $tmpfile "$HPCISSH_LOCAL_ACCOUNTS"
-        cat "$HPCISSH_LOCAL_ACCOUNTS"
-        return
+        check_and_print_local_accounts "$HPCISSH_LOCAL_ACCOUNTS"
+        return 0
     else
         rv=$?
         rm -f $tmpfile
-        exit $rv
+        return $rv
     fi
 }
 
@@ -261,12 +272,13 @@ conv_key() {
 
 KEY_PREFIX="Z"  # avoid "value too great for base"
 
-load_local_accounts() {
+load_local_accounts_switch() {
+    set -eu
     local USE_CACHE="$1"
     local ACCMAP_LIST=()
 
     set +eu
-    mapfile -t ACCMAP_LIST < <(get_local_accounts_json $USE_CACHE \
+    mapfile -t ACCMAP_LIST < <(fetch_local_accounts_json $USE_CACHE \
         | jq -r '.["local-accounts"] | to_entries | .[] | .key + " " + .value' 2> /dev/null)
     # ex. ACCMAP_LIST[0]="oauth-server1.test test02"
 
@@ -296,16 +308,9 @@ load_local_accounts() {
     done
 }
 
-get_local_account() {
-    local FQDN="$1"
-    local key
-    local localacc
+load_local_accounts() {
+    set -eu
     local USE_CACHE
-
-    DEBUG "FQDN=$FQDN"
-    key=`echo $FQDN | conv_key`
-    key="${KEY_PREFIX}${key}"
-    DEBUG "FQDN(sha256)=$key"
 
     if [ -f "$HPCISSH_LOCAL_ACCOUNTS" ]; then
         local EXPIRE=${OIDC_USERINFO_EXPIRE}
@@ -322,26 +327,25 @@ get_local_account() {
             DEBUG "SKIP downloading userinfo (use cache)"
 
             USE_CACHE=true
-            load_local_accounts $USE_CACHE
-            set +u
-            localacc=${ACCMAP[$key]}
-            set -u
-            if [ -n "$localacc" ]; then
-                # found
-                echo "$localacc"
-                return
-            else
-                # not found
-                echo ""
-                return
-            fi
+            load_local_accounts_switch $USE_CACHE
+            return
         fi
         # expired
     fi
     # update JSON file once
     # download userinfo
     USE_CACHE=false
-    load_local_accounts $USE_CACHE
+    load_local_accounts_switch $USE_CACHE
+}
+
+get_local_account() {
+    local FQDN="$1"
+    local key
+    DEBUG "FQDN=$FQDN"
+    key=`echo $FQDN | conv_key`
+    key="${KEY_PREFIX}${key}"
+    DEBUG "FQDN(sha256)=$key"
+
     set +u
     echo ${ACCMAP[$key]}
     set -u
@@ -428,6 +432,9 @@ convert_ssh_arg() {
     local ARG
     local NEXTARG
     local found=false
+
+    load_local_accounts
+
     for i in `seq 1 $maxidx`; do
         ARG=${ARGV[${i}]}
         case "$ARG" in
@@ -528,6 +535,8 @@ convert_scp_arg() {
     local SSH_FILE=
     local found=false
 
+    load_local_accounts
+
     # convert from last arg
     for i in `seq $maxidx -1 1`; do
         ARG=${ARGV[$i]}
@@ -574,6 +583,8 @@ convert_sftp_arg() {
     local SSH_USER=
     local SSH_HOST=
     local SSH_FILE=
+
+    load_local_accounts
 
     if [[ ! "$DST" = *:* ]]; then
         if [[ $argnum -ge 3 ]]; then
@@ -668,6 +679,7 @@ check_expired() {
 }
 
 is_jwt_expired() {
+    local decoded
     decoded=`decode_jwt`
     if echo "$decoded" | jq | check_expired false; then
         return 1
@@ -677,7 +689,8 @@ is_jwt_expired() {
 }
 
 report_expired() {
-    decoded=`decode_jwt`
-    echo "$decoded" | jq
-    echo "$decoded" | jq | check_expired true
+    local decoded
+    decoded=`decode_jwt | jq`
+    echo "$decoded"
+    echo "$decoded" | check_expired true
 }
