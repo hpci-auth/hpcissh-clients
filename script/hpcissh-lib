@@ -2,7 +2,7 @@
 
 set -eu -o pipefail
 
-VERSION="1.8 (2023-12-19)"
+VERSION="1.9 (2024-02-22)"
 
 AUTH_TIMES="-o NumberOfPasswordPrompts=1"
 AUTH_METHOD="-o PreferredAuthentications=keyboard-interactive"
@@ -164,27 +164,27 @@ load_common_config() {
 	done
     fi
 
+    HPCISSH_DEBUG_X=${HPCISSH_DEBUG_X:-no}
+    if [ "$HPCISSH_DEBUG_X" = yes ]; then
+        set -x
+    fi
+
     # set defaults
-    OIDC_AT_LEAST_VALID_TIME=${OIDC_AT_LEAST_VALID_TIME:-180}
+    OIDC_AT_LEAST_VALID_TIME=${OIDC_AT_LEAST_VALID_TIME:-180}  # 3 min.
     OIDC_AGENT_FORWARD=${OIDC_AGENT_FORWARD:-yes}
     OIDC_AGENT_CONF_NAME=${OIDC_AGENT_CONF_NAME:-hpci}
 
     OIDC_ISSUER=${OIDC_ISSUER:-https://metis.hpci.nii.ac.jp/auth/realms/HPCI}
     OIDC_USERINFO_ENDPOINT=${OIDC_USERINFO_ENDPOINT:-https://metis.hpci.nii.ac.jp/auth/realms/HPCI/protocol/openid-connect/userinfo}
-
-    OIDC_USERINFO_EXPIRE=${OIDC_USERINFO_EXPIRE:-43200}  # 1/2 day
+    OIDC_USERINFO_EXPIRE=${OIDC_USERINFO_EXPIRE:-1800}  # sec. = 30 min.
 
     HPCISSH_DEBUG=${HPCISSH_DEBUG:-no}
-    HPCISSH_DEBUG_X=${HPCISSH_DEBUG_X:-no}
     HPCISSH_PORT=${HPCISSH_PORT:-2222}
 
     HPCISSH_TOKEN_INPUT=${HPCISSH_TOKEN_INPUT:-sshpass}  # or SSH_ASKPASS
 
     USE_JWT_AGENT=${USE_JWT_AGENT:-yes}
 
-    if [ "$HPCISSH_DEBUG_X" = yes ]; then
-	set -x
-    fi
     DEBUG "OIDC_SOCK=${OIDC_SOCK:-}"
 }
 
