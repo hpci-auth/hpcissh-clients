@@ -1,5 +1,3 @@
 #!/bin/bash
 
-CMD_ABS_PATH=`realpath $(which ${0})`
-PARENT_DIR=`dirname ${CMD_ABS_PATH}`
-exec ${PARENT_DIR}/hpci-token
+exec ${bindir:-@bindir@}/hpci-token
