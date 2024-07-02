@@ -1,6 +1,6 @@
 # hpcissh-clients
 
-OAuth-based ssh-client commmands for HPCI
+OAuth-based ssh-client commands for HPCI
 
 ## Parameters
 
