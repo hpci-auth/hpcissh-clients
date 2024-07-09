@@ -2,7 +2,7 @@
 
 set -eu -o pipefail
 
-VERSION="1.9 (2024-02-22)"
+VERSION="1.10 (2024-07-12)"
 
 AUTH_TIMES="-o NumberOfPasswordPrompts=1"
 AUTH_METHOD="-o PreferredAuthentications=keyboard-interactive"
@@ -85,8 +85,8 @@ _get_token() {
         return 1  # error
     fi
     if $CHECK_EXPIRED && is_jwt_expired; then
-        ERROR "Expired access token is found."
-        return 1  # error
+	    WARN "Expired access token is found."
+	    # not error
     fi
 }
 
@@ -380,8 +380,8 @@ load_conf() {
             # The account configuration is already loaded
             get_token_ignore_expired
             if is_jwt_expired; then
-                ERROR "Expired access token is found."
-                return 1  # error
+		    WARN "Expired access token is found."
+		    # not error
             fi
         fi
     else
@@ -653,23 +653,30 @@ check_expired() {
     local val
     local sec
     local remain=0
+    local datetime
     while read key val; do
         case $key in
             \"exp\":)
                 sec=$(echo $val | cut -d, -f 1)
                 [ $is_expired = 0 ] && is_expired=$((sec < current))
                 remain=$((sec - current))
+		break
                 ;;
-            \"iat\":|\"auth_time\":|\"nbf\":)
-                sec=$(echo $val | cut -d, -f 1)
-                [ $is_expired = 0 ] && is_expired=$((sec > current))
-                ;;
+            # NOTE: No need to compare "iat"
+            # \"iat\":|\"auth_time\":|\"nbf\":)
+            #    sec=$(echo $val | cut -d, -f 1)
+            #    [ $is_expired = 0 ] && is_expired=$((sec > current))
+            #    ;;
         esac
     done
     if $report; then
+	datetime=$(date)
         # 1 is True
-        [ $is_expired -eq 1 ] && ERROR "Access token is expired."
-        [ $remain -gt 0 ] && INFO "remaining time: ${remain} sec."
+	if [ $is_expired -eq 1 ]; then
+		ERROR "Access token is expired. (${datetime})"
+	elif [ $remain -gt 0 ]; then
+		INFO "remaining time: ${remain} sec."
+	fi
     fi
     if [ $is_expired -eq 1 ]; then
         return 1  # failure

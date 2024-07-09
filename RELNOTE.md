@@ -1,5 +1,10 @@
 # Release note for hpcissh-clients
 
+## version 1.10 (2024-07-12)
+
+- Update feature
+  - ignore validity date (iat, exp) on the client side
+
 ## version 1.9 (2024-02-22)
 
 - Update feature
