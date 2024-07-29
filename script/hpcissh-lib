@@ -688,7 +688,7 @@ check_expired() {
 is_jwt_expired() {
     local decoded
     decoded=`decode_jwt`
-    if echo "$decoded" | jq | check_expired false; then
+    if echo "$decoded" | jq . | check_expired false; then
         return 1
     else
         return 0  # True ... expired
@@ -697,7 +697,7 @@ is_jwt_expired() {
 
 report_expired() {
     local decoded
-    decoded=`decode_jwt | jq`
+    decoded=`decode_jwt | jq .`
     echo "$decoded"
     echo "$decoded" | check_expired true
 }
