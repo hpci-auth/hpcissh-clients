@@ -1,9 +1,10 @@
 # Release note for hpcissh-clients
 
-## version 1.10 (2024-07-12)
+## version 1.10 (2024-07-30)
 
 - Update feature
   - ignore validity date (iat, exp) on the client side
+  - compatible with jq version 1.5 and earlier 
 
 ## version 1.9 (2024-02-22)
 
