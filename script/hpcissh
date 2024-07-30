@@ -55,7 +55,7 @@ then  # use oidc-agent
     if [ "${OIDC_AGENT_FORWARD}" == "yes" ];
     then
 	#SUB_CLAIM=`jwt decode ${OIDC_AT} | grep '"sub":' | awk '{ print $2 }' | sed -e 's/[",]//g'`
-	SUB_CLAIM=`decode_jwt | jq | grep '"sub":' | awk '{ print $2 }' | sed -e 's/[",]//g'`
+	SUB_CLAIM=`decode_jwt | jq . | grep '"sub":' | awk '{ print $2 }' | sed -e 's/[",]//g'`
 
         # hpcissh have to forward oidc-agent's unix domain socket to /tmp
         # on remote host as ssh can't create a parent directory of
