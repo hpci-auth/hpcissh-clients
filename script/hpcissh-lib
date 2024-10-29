@@ -2,7 +2,7 @@
 
 set -eu -o pipefail
 
-VERSION="1.10 (2024-07-12)"
+VERSION="1.11 (2024-10-30)"
 
 AUTH_TIMES="-o NumberOfPasswordPrompts=1"
 AUTH_METHOD="-o PreferredAuthentications=keyboard-interactive"
@@ -34,7 +34,9 @@ INFO() {
 }
 
 WARN() {
-    echo >&2 "WARNING:" "$@"
+    if [ "${HPCISSH_QUIET:-no}" = no ]; then
+	echo >&2 "WARNING:" "$@"
+    fi
 }
 
 ERROR() {
@@ -44,6 +46,7 @@ ERROR() {
 _get_token() {
     local CHECK_EXPIRED="$1"
 
+    # global
     OIDC_AT="${OIDC_AT:-}"
     if [ -n "$OIDC_AT" ]; then
         DEBUG "OIDC_AT: use OIDC_AT (access token) environemnt variable"
@@ -84,9 +87,19 @@ _get_token() {
         ERROR "Access token cannot be found. jwt-agent or oidc-agent is required."
         return 1  # error
     fi
+
+    # global
+    OIDC_AT_DECODED=`decode_jwt | jq .`
     if $CHECK_EXPIRED && is_jwt_expired; then
 	    WARN "Expired access token is found."
 	    # not error
+    fi
+
+    if [ -n "${OIDC_USERINFO_ENDPOINT}" ]; then
+        _USERINFO_ENDPOINT="${OIDC_USERINFO_ENDPOINT}"
+    else
+        _ISSUER=`get_claim iss`
+        _USERINFO_ENDPOINT="${_ISSUER}${OIDC_USERINFO_ENDPOINT_PATH}"
     fi
 }
 
@@ -175,9 +188,12 @@ load_common_config() {
     OIDC_AGENT_CONF_NAME=${OIDC_AGENT_CONF_NAME:-hpci}
 
     OIDC_ISSUER=${OIDC_ISSUER:-https://metis.hpci.nii.ac.jp/auth/realms/HPCI}
-    OIDC_USERINFO_ENDPOINT=${OIDC_USERINFO_ENDPOINT:-https://metis.hpci.nii.ac.jp/auth/realms/HPCI/protocol/openid-connect/userinfo}
-    OIDC_USERINFO_EXPIRE=${OIDC_USERINFO_EXPIRE:-1800}  # sec. = 30 min.
 
+    OIDC_USERINFO_ENDPOINT_PATH=${OIDC_USERINFO_ENDPOINT_PATH:-/protocol/openid-connect/userinfo}
+    OIDC_USERINFO_ENDPOINT=${OIDC_USERINFO_ENDPOINT:-}  # default: auto (get issuer from access token)
+    OIDC_USERINFO_EXPIRE=${OIDC_USERINFO_EXPIRE:-1800}  # sec. (30 min.)
+
+    HPCISSH_QUIET=${HPCISSH_QUIET:-no}
     HPCISSH_DEBUG=${HPCISSH_DEBUG:-no}
     HPCISSH_PORT=${HPCISSH_PORT:-2222}
 
@@ -209,7 +225,7 @@ init_common() {
 }
 
 print_userinfo() {
-    curl -LfsS -H GET "$OIDC_USERINFO_ENDPOINT" \
+    curl -LfsS -H GET "$_USERINFO_ENDPOINT" \
          -H 'Content-Type:application/json;charset=utf-8' \
          -H "Authorization: Bearer $OIDC_AT"
 }
@@ -227,8 +243,8 @@ check_and_print_local_accounts() {
         # invalid file
         local info
         info=$(cat "$HPCISSH_LOCAL_ACCOUNTS")
-        WARN "Invalid userinfo from $OIDC_USERINFO_ENDPOINT: $info"
-        # rm -f "$HPCISSH_LOCAL_ACCOUNTS"
+        WARN "Invalid userinfo from $_USERINFO_ENDPOINT: $info"
+        rm -f "$HPCISSH_LOCAL_ACCOUNTS"
         # DEBUG "DELETE invalid cached userinfo"
         echo ""  # output
         return
@@ -644,6 +660,15 @@ decode_jwt() {
     done
 }
 
+decode_jwt_cached() {
+    echo "$OIDC_AT_DECODED"
+}
+
+get_claim() {
+    local name="$1"
+    echo "$OIDC_AT_DECODED" | grep "\"${name}\":" | awk '{ print $2 }' | sed -e 's/[",]//g'
+}
+
 check_expired() {
     local report="$1"
     local is_expired=0
@@ -686,9 +711,7 @@ check_expired() {
 }
 
 is_jwt_expired() {
-    local decoded
-    decoded=`decode_jwt`
-    if echo "$decoded" | jq . | check_expired false; then
+    if echo "$OIDC_AT_DECODED" | check_expired false; then
         return 1
     else
         return 0  # True ... expired
@@ -696,8 +719,6 @@ is_jwt_expired() {
 }
 
 report_expired() {
-    local decoded
-    decoded=`decode_jwt | jq .`
-    echo "$decoded"
-    echo "$decoded" | check_expired true
+    echo "$OIDC_AT_DECODED"
+    echo "$OIDC_AT_DECODED" | check_expired true
 }

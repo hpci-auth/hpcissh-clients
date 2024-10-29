@@ -1,5 +1,13 @@
 # Release note for hpcissh-clients
 
+## version 1.11 (2024-10-30)
+
+- Update feature
+  - auto OIDC_USERINFO_ENDPOINT
+- New configuration directive
+  - OIDC_USERINFO_ENDPOINT_PATH
+  - HPCISSH_QUIET=yes/no(default)
+
 ## version 1.10 (2024-07-30)
 
 - Update feature
