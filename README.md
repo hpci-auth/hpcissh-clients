@@ -14,6 +14,10 @@ for configuration file (~/.hpcissh) or environment variable.
   - If yes, jwt-agent is used in preference to oidc-agent
   - type: yes or no
   - default: yes
+- HPCISSH_QUIET
+  - shut up WARNING
+  - type: yes or no
+  - default: no
 - HPCISSH_DEBUG
   - debug mode
   - type: yes or no
@@ -45,6 +49,9 @@ for configuration file (~/.hpcissh) or environment variable.
 - OIDC_USERINFO_ENDPOINT
   - OpenID userinfo endpoint (URL)
   - type: string
+  - default: auto (use "iss" + OIDC_USERINFO_ENDPOINT_PATH)
+- OIDC_USERINFO_ENDPOINT_PATH
+  - path of userinfo endpoint
   - default: (See script/hpcissh-lib)
 - HPCISSH_PORT
   - port nunmber of hpcissh server
