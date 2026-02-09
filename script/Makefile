@@ -10,6 +10,7 @@ pkglibexec_SCRIPTS = hpcissh-lib
 prefix = /usr/local
 bindir = ${prefix}/bin
 pkglibexecdir = ${prefix}/libexec
+bash_path = /bin/bash
 
 SED = sed
 MKDIR_P = mkdir -p
@@ -18,7 +19,8 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 
 do_subst = $(SED) -e 's,[@]bindir[@],$(bindir),g' \
-		-e 's,[@]pkglibexecdir[@],${pkglibexecdir},g'
+		-e 's,[@]pkglibexecdir[@],${pkglibexecdir},g' \
+		-e 's,[@]bash_path[@],$(bash_path),g'
 
 all: Makefile
 	-mkdir build

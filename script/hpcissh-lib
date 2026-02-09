@@ -1,8 +1,8 @@
-#!/bin/bash
+#!@bash_path@
 
 set -eu -o pipefail
 
-VERSION="1.11 (2024-10-30)"
+VERSION="1.12 (2026-02-10)"
 
 AUTH_TIMES="-o NumberOfPasswordPrompts=1"
 AUTH_METHOD="-o PreferredAuthentications=keyboard-interactive"
