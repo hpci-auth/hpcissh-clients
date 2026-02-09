@@ -136,6 +136,16 @@ runssh() {
     fi
 }
 
+permission_bits() {
+    if stat --version &> /dev/null; then
+        # GNU stat(1)
+        stat -c %a "$1"
+    else
+        # BSD, macOS
+        stat -f %Lp "$1"
+    fi
+}
+
 check_perm() {
     local CONF="$1"
 
@@ -144,7 +154,7 @@ check_perm() {
 
     # is writable by others?
     local writable
-    writable=$(( 8#$(stat -c %a "$CONF") & ~8#0755 ))
+    writable=$(( 8#$(permission_bits "$CONF") & ~8#0755 ))
     [ "$writable" = "0" ] || return 1
 }
 
@@ -200,6 +210,7 @@ load_common_config() {
     HPCISSH_TOKEN_INPUT=${HPCISSH_TOKEN_INPUT:-sshpass}  # or SSH_ASKPASS
 
     USE_JWT_AGENT=${USE_JWT_AGENT:-yes}
+    AUTO_LOGIN_NAME=${AUTO_LOGIN_NAME:-yes}  # no ... speedup
 
     DEBUG "OIDC_SOCK=${OIDC_SOCK:-}"
 }
@@ -282,8 +293,23 @@ fetch_local_accounts_json() {
 }
 
 conv_key() {
-    # use sha256
-    sha256sum | cut -d ' ' -f 1
+    # use SHA-256
+    local val
+    if type -path sha256sum &> /dev/null; then
+        # DEBUG "use sha256sum"
+        val=$(sha256sum)
+    elif type -path openssl &> /dev/null; then
+        # DEBUG "use openssl"
+        val=$(openssl dgst -sha256 -r)
+    elif type -path shasum &> /dev/null; then
+        # DEBUG "use shasum"
+        val=$(shasum -a 256)
+    else
+        ERROR "No sha256sum command"
+        exit 1
+    fi
+    # Same as `echo -n "$val" | cut -d ' ' -f 1`
+    echo "${val%% *}"
 }
 
 KEY_PREFIX="Z"  # avoid "value too great for base"
@@ -317,14 +343,28 @@ load_local_accounts_switch() {
         key="$KEY_PREFIX"`echo $FQDN | conv_key`
         value=`echo $i | cut -d ' ' -f 2`
         ACCMAP[${key}]="$value"
-        DEBUG "ACCMAP[$FQDN($key)]=${ACCMAP[$key]}"
+        DEBUG "ACCMAP[($FQDN)$key]=${ACCMAP[$key]}"
     done
     for i in "${!ACCMAP[@]}"; do
         DEBUG "ACCMAP[$i]=${ACCMAP[$i]}"
     done
 }
 
+get_mtime() {
+    if stat --version &> /dev/null; then
+        # GNU stat(1)
+        stat -c %Y "$1"
+    else
+        # BSD, macOS
+        stat -f %m "$1"
+    fi
+}
+
 load_local_accounts() {
+    if [ "${AUTO_LOGIN_NAME}" != yes ]; then
+        DEBUG "Skip load_local_accounts"
+        return
+    fi
     set -eu
     local USE_CACHE
 
@@ -334,7 +374,7 @@ load_local_accounts() {
         local mtime
         local onedayago
         current_time=$(date +%s)
-        mtime=$(stat -c %Y "$HPCISSH_LOCAL_ACCOUNTS")  # modification time
+        mtime=$(get_mtime "$HPCISSH_LOCAL_ACCOUNTS")  # modification time
         expired=$((mtime + EXPIRE))
         DEBUG current_time=$current_time
         DEBUG mtime=$mtime

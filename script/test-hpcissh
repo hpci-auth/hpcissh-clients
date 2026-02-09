@@ -57,6 +57,15 @@ test_common() {
     fi
 }
 
+conv_key_abc() {
+    echo -n abc | conv_key
+}
+
+test_conv_key() {
+    local val
+    test_common conv_key_abc ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad "test_conv_key"
+}
+
 test_convert_ssh_arg() {
     test_common convert_ssh_arg "$@"
 }
@@ -72,6 +81,8 @@ test_convert_sftp_arg() {
 load_common_config
 
 NG=0
+test_conv_key
+
 test_convert_ssh_arg "ssh user1@host1" ssh host1
 test_convert_ssh_arg "ssh -v user1@host1" ssh -v host1
 test_convert_ssh_arg "ssh -p 2222 user1@host1" ssh -p 2222 host1

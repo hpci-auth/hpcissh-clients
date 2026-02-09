@@ -97,6 +97,10 @@ for configuration file (~/.hpcissh) or environment variable.
   - sshpass or SSH_ASKPASS
   - type: string
   - default: sshpass
+- AUTO_LOGIN_NAME
+  - Login name is automatically added
+  - type: yes or no
+  - default: yes
 
 ## For developer
 
