@@ -2,6 +2,42 @@
 
 OAuth-based ssh-client commands for HPCI
 
+## Dependencies
+
+- jq
+- sshpass
+- bash version 5 or later
+- jwt-agent
+- oidc-agent (optional)
+
+## Installation
+
+```bash
+make
+sudo make install
+```
+
+### For macOS
+
+hpcissh can be installed using homebrew.
+
+```bash
+brew tap hpci-auth/tap
+brew install hpcissh
+brew install jwt-agent
+```
+
+- Install oidc-agent:
+  - https://indigo-dc.gitbook.io/oidc-agent/intro/macos
+
+(Manual installation)
+
+```bash
+brew install bash jq sshpass
+make prefix=$(brew --prefix) bash_path=$(brew --prefix)/bin/bash
+sudo make install prefix=$(brew --prefix)
+```
+
 ## Parameters
 
 for configuration file (~/.hpcissh) or environment variable.
@@ -61,3 +97,16 @@ for configuration file (~/.hpcissh) or environment variable.
   - sshpass or SSH_ASKPASS
   - type: string
   - default: sshpass
+
+## For developer
+
+### Testing
+
+```bash
+make all install test clean prefix=$(pwd)/LOCAL
+
+### (macOS)
+make all install test clean prefix=$(pwd)/LOCAL bash_path=$(brew --prefix)/bin/bash
+
+rm -rf ./LOCAL
+```
