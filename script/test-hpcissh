@@ -117,5 +117,7 @@ test_convert_sftp_arg 'sftp "user2@host2:a b" "c d"' sftp "host2:a b" "c d"
 test_convert_sftp_arg "INVALID SYNTAX" sftp
 
 if [ $NG -gt 0 ]; then
+    echo "Some tests failed."
     exit 1
 fi
+echo "All tests passed."
