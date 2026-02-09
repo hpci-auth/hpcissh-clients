@@ -17,4 +17,4 @@ else
     CONF_NAME=${1}
 fi
 
-oidc-sshconf "${ISSUER}" "${SCOPES}" "${AUDIENCE}" "${CONF_NAME}"
+exec ${bindir:-@bindir@}/oidc-sshconf "${ISSUER}" "${SCOPES}" "${AUDIENCE}" "${CONF_NAME}"
