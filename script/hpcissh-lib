@@ -367,6 +367,37 @@ get_local_account() {
     set -u
 }
 
+set_OIDC_ENCRYPTION_PW() {
+    local confirm="$1"
+    if type tput &> /dev/null; then
+        RED=$(tput setaf 1)
+        CYAN=$(tput setaf 6)
+        RESET=$(tput sgr0)
+    else
+        RED=""
+        CYAN=""
+        RESET=""
+    fi
+    while :; do
+        echo -n "${CYAN}Enter decryption password for account config '${CONF_NAME}': ${RESET}"
+        read -s OIDC_ENCRYPTION_PW
+        echo
+        if [ "$confirm" = yes ]; then
+            echo -n "${CYAN}Confirm encryption password: ${RESET}"
+            read -s OIDC_ENCRYPTION_PW_2
+            echo
+            if [ "$OIDC_ENCRYPTION_PW" = "$OIDC_ENCRYPTION_PW_2" ]; then
+                break
+            fi
+        else
+            break
+        fi
+        echo "${RED}Encryption passwords did not match.${RESET}"
+    done
+    # "--pw-env" option to suppress oidc-prompt (GUI popup) for oidc-agent
+    export OIDC_ENCRYPTION_PW
+}
+
 load_conf() {
     if [ ${#} -ne 4 ];
     then
@@ -391,7 +422,8 @@ load_conf() {
         set -e
         if [ ${RESULT} -ne 0 ];
         then
-            oidc-add ${CONF_NAME}
+            set_OIDC_ENCRYPTION_PW no
+            oidc-add --pw-env "${CONF_NAME}"
         else
             # The account configuration is already loaded
             get_token_ignore_expired
@@ -401,7 +433,9 @@ load_conf() {
             fi
         fi
     else
+        set_OIDC_ENCRYPTION_PW yes
         oidc-gen --pub \
+            --pw-env \
             -w device \
             --issuer=${ISSUER} \
             --scope="${SCOPES}" \
