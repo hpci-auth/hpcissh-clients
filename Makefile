@@ -4,6 +4,9 @@
 all:
 	$(MAKE) -C script
 
+test:
+	$(MAKE) test -C script
+
 install:
 	$(MAKE) install -C script
 

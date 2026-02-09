@@ -28,6 +28,9 @@ all: Makefile
 		$(do_subst) < $$f > build/$$f ; \
 	done
 
+test:
+	$(prefix)/bin/test-hpcissh
+
 install: install-binSCRIPTS install-pkglibexecSCRIPTS
 
 install-binSCRIPTS: $(bin_SCRIPTS)
