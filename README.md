@@ -38,28 +38,28 @@ make prefix=$(brew --prefix) bash_path=$(brew --prefix)/bin/bash
 sudo make install prefix=$(brew --prefix)
 ```
 
-## Parameters
+## Configurable parameters
 
-for configuration file (~/.hpcissh) or environment variable.
+Run `hpcissh-config-show` command to print the current parameters.
 
-- OIDC_USERINFO_EXPIRE
-  - lifetime of cached userinfo file (~/.hpcissh.local_accounts)
-  - type: integer (second)
-  - default: 1800
+To customize parameters, specify the values in `~/.hpcissh` or environment variables.
+
+The following items can be configured:
+
 - USE_JWT_AGENT
   - If yes, jwt-agent is used in preference to oidc-agent
   - type: yes or no
   - default: yes
-- HPCISSH_QUIET
-  - shut up WARNING
+- HPCISSH_DEBUG_X
+  - run with `set -x`
   - type: yes or no
   - default: no
 - HPCISSH_DEBUG
   - debug mode
   - type: yes or no
   - default: no
-- HPCISSH_DEBUG_X
-  - run with `set -x`
+- HPCISSH_QUIET
+  - shut up WARNING
   - type: yes or no
   - default: no
 - OIDC_AT_LEAST_VALID_TIME
@@ -82,13 +82,17 @@ for configuration file (~/.hpcissh) or environment variable.
   - for oidc-agent
   - type: string
   - default: (See script/hpcissh-lib)
+- OIDC_USERINFO_ENDPOINT_PATH
+  - path of userinfo endpoint
+  - default: (See script/hpcissh-lib)
 - OIDC_USERINFO_ENDPOINT
   - OpenID userinfo endpoint (URL)
   - type: string
   - default: auto (use "iss" + OIDC_USERINFO_ENDPOINT_PATH)
-- OIDC_USERINFO_ENDPOINT_PATH
-  - path of userinfo endpoint
-  - default: (See script/hpcissh-lib)
+- OIDC_USERINFO_EXPIRE
+  - lifetime of cached userinfo file (~/.hpcissh.local_accounts)
+  - type: integer (second)
+  - default: 1800
 - HPCISSH_PORT
   - port nunmber of hpcissh server
   - type: integer

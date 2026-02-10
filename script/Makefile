@@ -4,6 +4,7 @@
 bin_SCRIPTS = hpcissh hpciscp hpcisftp hpcissh-version \
 	hpci-get-userinfo hpci-parse-token hpci-token \
 	oidc-sshconf oidc-sshconf-hpci oidc-token-hpci \
+	hpcissh-config-show \
 	test-hpcissh
 pkglibexec_SCRIPTS = hpcissh-lib
 

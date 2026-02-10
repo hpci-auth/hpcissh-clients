@@ -12,8 +12,8 @@ SSH_OPTS="${SSH_BASIC_OPTS} ${FORWARD_BEHAVIOR}"
 
 OAUTH_SSH_AT_PROMPT="Enter your OAuth token:"
 
-HPCISSH_CONF=${HOME}/.hpcissh
-HPCISSH_LOCAL_ACCOUNTS=${HPCISSH_CONF}.local_accounts
+HPCISSH_CONF=${HPCISSH_CONF:-${HOME}/.hpcissh}
+HPCISSH_LOCAL_ACCOUNTS="${HPCISSH_CONF}.local_accounts"
 
 # TEST CASE:
 # - setup:
@@ -158,11 +158,39 @@ check_perm() {
     [ "$writable" = "0" ] || return 1
 }
 
+HPCISSH_PARAM_KEY_LIST=()
+
+set_param() {
+    local name="$1"
+    local default_val="$2"
+
+    HPCISSH_PARAM_KEY_LIST+=("${name}")
+    local num="${#HPCISSH_PARAM_KEY_LIST[@]}"
+
+    # For example, this is the same as HPCISSH_DEBUG_X=${HPCISSH_DEBUG_X:-no}
+    if [[ -v "${name}" ]]; then
+        declare -g "${name}=${!name}"
+        DEBUG "set_param[num=${num}]: ${name}=${!name} (customized {default:${default_val}})"
+    else
+        declare -g "${name}=${default_val}"
+        DEBUG "set_param[num=${num}]: ${name}=${!name} (use default)"
+    fi
+}
+
+config_show() {
+    local key
+    for key in "${HPCISSH_PARAM_KEY_LIST[@]}"; do
+        if [[ -v "${key}" ]]; then
+            echo "${key}=${!key}"
+        fi
+    done
+}
+
 load_common_config() {
     # Load user configuration
-    if [ -f $HPCISSH_CONF ];
+    if [ -f "$HPCISSH_CONF" ];
     then
-        if ! check_perm $HPCISSH_CONF; then
+        if ! check_perm "$HPCISSH_CONF"; then
             ERROR "${HPCISSH_CONF} is writable by others.  Run 'chmod 600 ${HPCISSH_CONF}'."
             exit 1
         fi
@@ -170,7 +198,7 @@ load_common_config() {
         local keyval
         local key
         local val
-        for keyval in $(cat $HPCISSH_CONF); do
+        for keyval in $(cat "$HPCISSH_CONF"); do
             [[ "$keyval" =~ "=" ]] || continue
             echo "$keyval" | grep -q "^\s*#.*$" && continue
             key=${keyval%=*}
@@ -178,41 +206,43 @@ load_common_config() {
             # skip semicolon
             [[ "$key" =~ [\;] ]] && continue
             [[ "$val" =~ [\;] ]] && continue
-            if eval "test -z \"\${${key}:-}\""; then
-                eval "${key}=${val}"
-                eval "DEBUG \"${key}=${val} ($HPCISSH_CONF)\""
+            if [[ -v "${key}" ]]; then
+                DEBUG "${key}=${!key} (environment variable is specified)"
             else
-                eval "DEBUG \"${key}=\$${key} (environment variable)\""
+                declare -g "${key}=${val}"
+                DEBUG "${key}=${val} ($HPCISSH_CONF)"
             fi
         done
     fi
 
-    HPCISSH_DEBUG_X=${HPCISSH_DEBUG_X:-no}
+    # Use a default value if not set.
+
+    set_param HPCISSH_DEBUG_X "no"
     if [ "$HPCISSH_DEBUG_X" = yes ]; then
         set -x
     fi
+    set_param HPCISSH_DEBUG "no"
+    set_param HPCISSH_QUIET "no"
 
-    # set defaults
-    OIDC_AT_LEAST_VALID_TIME=${OIDC_AT_LEAST_VALID_TIME:-180}  # 3 min.
-    OIDC_AGENT_FORWARD=${OIDC_AGENT_FORWARD:-yes}
-    OIDC_AGENT_CONF_NAME=${OIDC_AGENT_CONF_NAME:-hpci}
+    set_param USE_JWT_AGENT "yes"  # no ... use oidc-agent
 
-    OIDC_ISSUER=${OIDC_ISSUER:-https://metis.hpci.nii.ac.jp/auth/realms/HPCI}
+    # for oidc-agent only
+    set_param OIDC_AT_LEAST_VALID_TIME "180"  # 3 min.
+    set_param OIDC_AGENT_FORWARD "yes"
+    set_param OIDC_AGENT_CONF_NAME "hpci"
+    set_param OIDC_ISSUER "https://metis.hpci.nii.ac.jp/auth/realms/HPCI"
 
-    OIDC_USERINFO_ENDPOINT_PATH=${OIDC_USERINFO_ENDPOINT_PATH:-/protocol/openid-connect/userinfo}
-    OIDC_USERINFO_ENDPOINT=${OIDC_USERINFO_ENDPOINT:-}  # default: auto (get issuer from access token)
-    OIDC_USERINFO_EXPIRE=${OIDC_USERINFO_EXPIRE:-1800}  # sec. (30 min.)
+    # for oidc-agent and jwt-agent
+    set_param OIDC_USERINFO_ENDPOINT_PATH "/protocol/openid-connect/userinfo"
+    set_param OIDC_USERINFO_ENDPOINT ""  # default: auto (get issuer from access token)
+    set_param OIDC_USERINFO_EXPIRE "1800"  # sec. (30 min.)
 
-    HPCISSH_QUIET=${HPCISSH_QUIET:-no}
-    HPCISSH_DEBUG=${HPCISSH_DEBUG:-no}
-    HPCISSH_PORT=${HPCISSH_PORT:-2222}
-
-    HPCISSH_TOKEN_INPUT=${HPCISSH_TOKEN_INPUT:-sshpass}  # or SSH_ASKPASS
-
-    USE_JWT_AGENT=${USE_JWT_AGENT:-yes}
-    AUTO_LOGIN_NAME=${AUTO_LOGIN_NAME:-yes}  # no ... speedup
+    set_param HPCISSH_PORT "2222"
+    set_param HPCISSH_TOKEN_INPUT "sshpass"  # sshpass or SSH_ASKPASS
+    set_param AUTO_LOGIN_NAME "yes"  # no ... speedup
 
     DEBUG "OIDC_SOCK=${OIDC_SOCK:-}"
+    DEBUG "OIDCD_PID=${OIDCD_PID:-}"
 }
 
 init_common() {
