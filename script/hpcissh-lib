@@ -231,6 +231,7 @@ load_common_config() {
     set_param OIDC_AGENT_FORWARD "yes"
     set_param OIDC_AGENT_CONF_NAME "hpci"
     set_param OIDC_ISSUER "https://metis.hpci.nii.ac.jp/auth/realms/HPCI"
+    set_param OIDC_AGENT_USE_PW_ENV "yes"
 
     # for oidc-agent and jwt-agent
     set_param OIDC_USERINFO_ENDPOINT_PATH "/protocol/openid-connect/userinfo"
@@ -437,7 +438,11 @@ get_local_account() {
     set -u
 }
 
+# To suppress oidc-prompt (GUI popup) for oidc-agent
 set_OIDC_ENCRYPTION_PW() {
+    if [ "${OIDC_AGENT_USE_PW_ENV}" != yes ]; then
+        return
+    fi
     local confirm="$1"
     if type tput &> /dev/null; then
         RED=$(tput setaf 1)
@@ -464,7 +469,7 @@ set_OIDC_ENCRYPTION_PW() {
         fi
         echo "${RED}Encryption passwords did not match.${RESET}"
     done
-    # "--pw-env" option to suppress oidc-prompt (GUI popup) for oidc-agent
+    # for "--pw-env" option of oidc-gen and oidc-add
     export OIDC_ENCRYPTION_PW
 }
 
@@ -493,7 +498,11 @@ load_conf() {
         if [ ${RESULT} -ne 0 ];
         then
             set_OIDC_ENCRYPTION_PW no
-            oidc-add --pw-env "${CONF_NAME}"
+            local OPT_PW_ENV=
+            if [ -n "${OIDC_ENCRYPTION_PW:-}" ]; then
+                OPT_PW_ENV="--pw-env"
+            fi
+            oidc-add $OPT_PW_ENV "${CONF_NAME}"
         else
             # The account configuration is already loaded
             get_token_ignore_expired
@@ -504,8 +513,12 @@ load_conf() {
         fi
     else
         set_OIDC_ENCRYPTION_PW yes
+        local OPT_PW_ENV=
+        if [ -n "${OIDC_ENCRYPTION_PW:-}" ]; then
+            OPT_PW_ENV="--pw-env"
+        fi
         oidc-gen --pub \
-            --pw-env \
+            $OPT_PW_ENV \
             -w device \
             --issuer=${ISSUER} \
             --scope="${SCOPES}" \

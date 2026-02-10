@@ -69,7 +69,7 @@ The following items can be configured:
   - default: 180
 - OIDC_AGENT_FORWARD
   - enable forwarding oidc-agent connection
-  - for oidc-agent
+  - for oidc-agent + hpcissh
   - type: yes or no
   - default: yes
 - OIDC_AGENT_CONF_NAME
@@ -82,6 +82,11 @@ The following items can be configured:
   - for oidc-agent
   - type: string
   - default: (See script/hpcissh-lib)
+- OIDC_AGENT_USE_PW_ENV
+  - suppress oidc-prompt (GUI popup)
+  - for oidc-agent
+  - type: yes or no
+  - default: yes
 - OIDC_USERINFO_ENDPOINT_PATH
   - path of userinfo endpoint
   - default: (See script/hpcissh-lib)
