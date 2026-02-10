@@ -1,5 +1,17 @@
 # Release note for hpcissh-clients
 
+## version 1.12 (2026-02-??)
+
+- Update feature
+  - support macOS platform
+  - suppress oidc-prompt (GUI popup) for oidc-agent
+  - change installer (make && make install)
+- New command
+  - hpcissh-config-show
+- New configuration directive
+  - OIDC_AGENT_USE_PW_ENV (default: yes)
+  - AUTO_LOGIN_NAME (default: yes)
+
 ## version 1.11 (2024-10-30)
 
 - Update feature
