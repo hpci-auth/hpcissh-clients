@@ -5,6 +5,7 @@ OAuth-based ssh-client commands for HPCI
 ## Dependencies
 
 - jq
+- curl
 - sshpass
 - bash version 5 or later
 - jwt-agent
