@@ -1,0 +1,8 @@
+#!@bash_path@
+
+set -eu
+
+source ${pkglibexecdir:-@pkglibexecdir@}/hpcissh-lib
+
+load_common_config
+config_show
