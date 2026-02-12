@@ -609,30 +609,33 @@ convert_ssh_arg() {
 }
 
 split_user_host_file() {
-    local input="$1"
-    local command="$2"  # scp or sftp
+    local -n ref_USER="$1"  # nameref
+    local -n ref_HOST="$2"  # nameref
+    local -n ref_FILE="$3"  # nameref
+    local input="$4"
+    local command="$5"  # scp or sftp
     local user=
     local host=
     local file=
 
-    if [[ $input == *:* ]]; then
+    if [[ "$input" == *:* ]]; then
         # user@host:file
         host=$(echo "$input" | cut -d':' -f1)
         file=$(echo "$input" | cut -d':' -f2-)
-        if [[ $host == *@* ]]; then
+        if [[ "$host" == *@* ]]; then
             user=$(echo "$host" | cut -d'@' -f1)
             host=$(echo "$host" | cut -d'@' -f2-)
         fi
     else
-        if [ $command = "scp" ]; then
+        if [ "$command" = "scp" ]; then
             user=
             host=
-            file=$input
-        elif [ $command = "sftp" ]; then
+            file="$input"
+        elif [ "$command" = "sftp" ]; then
             user=
-            host=$input
+            host="$input"
             file=
-            if [[ $host == *@* ]]; then
+            if [[ "$host" == *@* ]]; then
                 user=$(echo "$host" | cut -d'@' -f1)
                 host=$(echo "$host" | cut -d'@' -f2-)
             fi
@@ -640,13 +643,13 @@ split_user_host_file() {
     fi
     if [ "$HPCISSH_DEBUG" = yes ]; then
         DEBUG "--- $input ---"
-        DEBUG "SSH_USER=\"$user\""
-        DEBUG "SSH_HOST=\"$host\""
-        DEBUG "SSH_FILE=\"$file\""
+        DEBUG "_HPCISSH_USER=\"$user\""
+        DEBUG "_HPCISSH_HOST=\"$host\""
+        DEBUG "_HPCISSH_FILE=\"$file\""
     fi
-    echo "SSH_USER=\"$user\""
-    echo "SSH_HOST=\"$host\""
-    echo "SSH_FILE=\"$file\""
+    ref_USER="$user"
+    ref_HOST="$host"
+    ref_FILE="$file"
 }
 
 convert_scp_arg() {
@@ -663,9 +666,9 @@ convert_scp_arg() {
     fi
 
     local maxidx=$(($argnum - 1))
-    local SSH_USER=
-    local SSH_HOST=
-    local SSH_FILE=
+    local _HPCISSH_USER=
+    local _HPCISSH_HOST=
+    local _HPCISSH_FILE=
     local found=false
 
     load_local_accounts
@@ -681,14 +684,14 @@ convert_scp_arg() {
         # ARG is not a option
 
         if [[ "$ARG" == *:* ]]; then
-            eval `split_user_host_file "$ARG" scp`
-            if [ -n "$SSH_HOST" ]; then
-                if [ -z "$SSH_USER" ]; then
-                    SSH_USER=`get_local_account "$SSH_HOST"`
-                    if [ -n "$SSH_USER" ]; then
+            split_user_host_file _HPCISSH_USER _HPCISSH_HOST _HPCISSH_FILE "$ARG" scp
+            if [ -n "$_HPCISSH_HOST" ]; then
+                if [ -z "$_HPCISSH_USER" ]; then
+                    _HPCISSH_USER=`get_local_account "$_HPCISSH_HOST"`
+                    if [ -n "$_HPCISSH_USER" ]; then
                         found=true
                         # update
-                        ARGV[$i]="${SSH_USER}@${ARG}"
+                        ARGV[$i]="${_HPCISSH_USER}@${ARG}"
                     fi
                 fi
             fi
@@ -713,9 +716,9 @@ convert_sftp_arg() {
 
     local targetidx=$(($argnum - 1))
     local DST=${ARGV[$targetidx]}
-    local SSH_USER=
-    local SSH_HOST=
-    local SSH_FILE=
+    local _HPCISSH_USER=
+    local _HPCISSH_HOST=
+    local _HPCISSH_FILE=
 
     load_local_accounts
 
@@ -733,17 +736,14 @@ convert_sftp_arg() {
     fi
 
     local found=false
-    SSH_USER=
-    SSH_HOST=
-    SSH_FILE=
-    eval `split_user_host_file "$DST" sftp`
-    if [ -n "$SSH_HOST" ]; then
-        if [ -z "$SSH_USER" ]; then
-            SSH_USER=`get_local_account "$SSH_HOST"`
-            if [ -n "$SSH_USER" ]; then
+    split_user_host_file _HPCISSH_USER _HPCISSH_HOST _HPCISSH_FILE "$DST" sftp
+    if [ -n "$_HPCISSH_HOST" ]; then
+        if [ -z "$_HPCISSH_USER" ]; then
+            _HPCISSH_USER=`get_local_account "$_HPCISSH_HOST"`
+            if [ -n "$_HPCISSH_USER" ]; then
                 found=true
                 # update
-                ARGV[$targetidx]="${SSH_USER}@${DST}"
+                ARGV[$targetidx]="${_HPCISSH_USER}@${DST}"
             fi
         fi
     fi
