@@ -16,6 +16,9 @@ OAuth-based ssh-client commands for HPCI
 ```bash
 make
 sudo make install
+
+(uninstall)
+sudo make uninstall
 ```
 
 ### For macOS
@@ -35,8 +38,14 @@ brew install jwt-agent
 
 ```bash
 brew install bash jq sshpass
-make prefix=$(brew --prefix) bash_path=$(brew --prefix)/bin/bash
-sudo make install prefix=$(brew --prefix)
+make prefix=~/.local bash_path=$(brew --prefix)/bin/bash
+sudo make install prefix=~/.local
+
+# Please ensure ~/.local/bin is in your PATH
+# export PATH="$HOME/.local/bin:$PATH" >> ~/.bashrc
+
+# (uninstall)
+sudo make uninstall prefix=~/.local
 ```
 
 ## Configurable parameters
@@ -117,10 +126,13 @@ The following items can be configured:
 ### Testing
 
 ```bash
-make all install test clean prefix=$(pwd)/LOCAL
+make all install test clean uninstall prefix=$(pwd)/LOCAL
 
 ### (macOS)
-make all install test clean prefix=$(pwd)/LOCAL bash_path=$(brew --prefix)/bin/bash
+make all install test clean uninstall prefix=$(pwd)/LOCAL bash_path=$(brew --prefix)/bin/bash
+
+# Check that all files have been removed.
+find ./LOCAL
 
 rm -rf ./LOCAL
 ```

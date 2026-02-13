@@ -1,14 +1,12 @@
 # Makefile for hpcissh
-# Time-stamp: <2024-07-01 18:06:10 sakane>
 
-all:
-	$(MAKE) -C script
+SUBDIRS = script data
 
-test:
-	$(MAKE) test -C script
+.PHONY: all build install uninstall test clean $(SUBDIRS)
 
-install:
-	$(MAKE) install -C script
-
-clean:
-	$(MAKE) clean -C script
+all build install uninstall test clean:
+	@for dir in $(SUBDIRS); do \
+		echo "[=== Entering directory: $$dir (target: $@) ===]"; \
+		$(MAKE) -C $$dir $@ || exit 1; \
+		echo "[=== Leaving directory: $$dir ===]"; \
+	done

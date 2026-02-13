@@ -1,6 +1,3 @@
-# Makefile for scripts inspired by Automake :p
-# Time-stamp: <2024-07-01 21:08:15 sakane>
-
 bin_SCRIPTS = hpcissh hpciscp hpcisftp hpcissh-version \
 	hpci-get-userinfo hpci-parse-token hpci-token \
 	oidc-sshconf oidc-sshconf-hpci oidc-token-hpci \
@@ -8,41 +5,38 @@ bin_SCRIPTS = hpcissh hpciscp hpcisftp hpcissh-version \
 	test-hpcissh
 pkglibexec_SCRIPTS = hpcissh-lib
 
-prefix = /usr/local
-bindir = ${prefix}/bin
-pkglibexecdir = ${prefix}/libexec
-bash_path = /bin/bash
+include ../config.mk
 
-SED = sed
-MKDIR_P = mkdir -p
-INSTALL = install -c
-INSTALL_SCRIPT = ${INSTALL}
-INSTALL_DATA = ${INSTALL} -m 644
-
-do_subst = $(SED) -e 's,[@]bindir[@],$(bindir),g' \
-		-e 's,[@]pkglibexecdir[@],${pkglibexecdir},g' \
-		-e 's,[@]bash_path[@],$(bash_path),g'
-
-all: Makefile
-	-mkdir build
-	for f in $(bin_SCRIPTS); do \
+all build: Makefile
+	$(MKDIR_P) build
+	for f in $(bin_SCRIPTS) $(pkglibexec_SCRIPTS); do \
 		$(do_subst) < $$f > build/$$f ; \
 	done
-
-test:
-	$(prefix)/bin/test-hpcissh
 
 install: install-binSCRIPTS install-pkglibexecSCRIPTS
 
 install-binSCRIPTS: $(bin_SCRIPTS)
-	-$(MKDIR_P) ${DESTDIR}$(bindir)
+	$(MKDIR_P) ${DESTDIR}$(bindir)
 	for f in $(bin_SCRIPTS); do \
 		$(INSTALL_SCRIPT) build/$$f $(DESTDIR)$(bindir)/$$f ; \
 	done
 
 install-pkglibexecSCRIPTS: $(pkglibexec_SCRIPTS)
-	-$(MKDIR_P) ${DESTDIR}$(pkglibexecdir)
-	$(INSTALL_DATA) hpcissh-lib ${DESTDIR}$(pkglibexecdir)/hpcissh-lib
+	$(MKDIR_P) ${DESTDIR}$(pkglibexecdir)
+	for f in $(pkglibexec_SCRIPTS); do \
+		$(INSTALL_DATA) build/$$f $(DESTDIR)$(pkglibexecdir)/$$f ; \
+	done
+
+uninstall:
+	for f in $(bin_SCRIPTS); do \
+		rm -f $(DESTDIR)$(bindir)/$$f ; \
+	done
+	for f in $(pkglibexec_SCRIPTS); do \
+		rm -f $(DESTDIR)$(pkglibexecdir)/$$f ; \
+	done
+
+test:
+	$(prefix)/bin/test-hpcissh
 
 clean:
-	-rm -rf build
+	$(RM) -rf build
