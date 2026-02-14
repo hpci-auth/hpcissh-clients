@@ -32,9 +32,9 @@ brew install jwt-agent
 ```
 
 - Install oidc-agent:
-  - https://indigo-dc.gitbook.io/oidc-agent/intro/macos
+  - <https://indigo-dc.gitbook.io/oidc-agent/intro/macos>
 
-(Manual installation)
+#### Manual installation for macOS
 
 ```bash
 brew install bash jq sshpass
@@ -47,6 +47,96 @@ sudo make install prefix=~/.local
 # (uninstall)
 sudo make uninstall prefix=~/.local
 ```
+
+## Configuration
+
+### Install HPCI SSH_CA
+
+To update /etc/ssh/ssh_known_hosts
+
+```
+hpcissh-append-ssh-ca.sh --system --update
+```
+
+To update ~/.ssh/known_hosts per user
+
+```
+hpcissh-append-ssh-ca.sh --user --update
+```
+
+### Configuration files for oidc-agent
+
+```
+# (default)
+PREFIX=/usr/local
+
+ln -s ${PREFIX}/share/hpcissh/oidc-agent_hpci-main.conf /etc/oidc-agent/issuer.config.d/
+ln -s ${PREFIX}/share/hpcissh/oidc-agent_hpci-sub.conf  /etc/oidc-agent/issuer.config.d/
+```
+
+Homebrew (macOS):
+
+```
+# (Please install oidc-agent in advance)
+
+HOMEBREW_PREFIX=$(brew --prefix)
+
+ln -s ${HOMEBREW_PREFIX}/opt/hpcissh/share/hpcissh/oidc-agent_hpci-main.conf ${HOMEBREW_PREFIX}/etc/oidc-agent/issuer.config.d/
+ln -s ${HOMEBREW_PREFIX}/opt/hpcissh/share/hpcissh/oidc-agent_hpci-sub.conf  ${HOMEBREW_PREFIX}/etc/oidc-agent/issuer.config.d/
+```
+
+### Customize
+
+Please refer to "Configurable parameters" for how to change the settings.
+
+## Usage
+
+### Step 1: Preparation (get and update Access Token)
+
+Please choose either jwt-agent or oidc-agent to proceed.
+
+#### jwt-agent
+
+- (~/.hpcissh): set USE_JWT_AGENT=yes (default)
+- Login to JWT server: <https://elpis.hpci.nii.ac.jp>
+  - or use sub system: <https://elpis-c.hpci.nii.ac.jp>
+- Generate a JSON Web Token (JWT) and get the passphrase
+- Run jwt (Copy and Paste the command line, and input the passphrase)
+
+Example:
+
+```
+jwt-agent -s https://elpis.hpci.nii.ac.jp -l hpci00????
+Passphrase:
+Output JWT to /tmp/jwt_user_u501/token.jwt
+
+# (To stop)
+jwt-agent --stop
+```
+
+#### oidc-agent
+
+- (~/.hpcissh): set USE_JWT_AGENT=no
+
+TODO
+
+### Step 2: Run hpcissh
+
+Example:
+
+```
+hpcissh <HOSTNAME> [command,args]...
+hpcissh REMOTE_USER@<HOSTNAME> [command,args]...
+```
+
+### Other commands
+
+- hpciscp
+- hpcisftp
+- hpcissh-config-show
+- hpcissh-version
+- hpci-parse-token
+- hpci-get-userinfo
 
 ## Configurable parameters
 
