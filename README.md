@@ -83,8 +83,8 @@ Homebrew (macOS):
 
 HOMEBREW_PREFIX=$(brew --prefix)
 
-ln -s ${HOMEBREW_PREFIX}/opt/hpcissh/share/hpcissh/oidc-agent_hpci-main.conf ${HOMEBREW_PREFIX}/etc/oidc-agent/issuer.config.d/
-ln -s ${HOMEBREW_PREFIX}/opt/hpcissh/share/hpcissh/oidc-agent_hpci-sub.conf  ${HOMEBREW_PREFIX}/etc/oidc-agent/issuer.config.d/
+ln -sf ${HOMEBREW_PREFIX}/opt/hpcissh/share/hpcissh/oidc-agent_hpci-main.conf ${HOMEBREW_PREFIX}/etc/oidc-agent/issuer.config.d/hpci-main
+ln -sf ${HOMEBREW_PREFIX}/opt/hpcissh/share/hpcissh/oidc-agent_hpci-sub.conf  ${HOMEBREW_PREFIX}/etc/oidc-agent/issuer.config.d/hpci-sub
 ```
 
 ### Customize
