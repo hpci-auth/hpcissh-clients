@@ -48,6 +48,8 @@ sudo make install prefix=~/.local
 sudo make uninstall prefix=~/.local
 ```
 
+NOTE: hpcissh does not work in bash version 3 (/usr/bin/bash on macOS).
+
 ## Configuration
 
 ### Install HPCI SSH_CA
@@ -55,13 +57,13 @@ sudo make uninstall prefix=~/.local
 To update /etc/ssh/ssh_known_hosts
 
 ```
-hpcissh-append-ssh-ca.sh --system --update
+hpcissh-append-ssh-ca --system --update
 ```
 
 To update ~/.ssh/known_hosts per user
 
 ```
-hpcissh-append-ssh-ca.sh --user --update
+hpcissh-append-ssh-ca --user --update
 ```
 
 ### Configuration files for oidc-agent

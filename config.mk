@@ -15,6 +15,7 @@ INSTALL_DATA = ${INSTALL} -m 644
 
 do_subst = $(SED) -e 's,[@]bindir[@],$(bindir),g' \
 		-e 's,[@]pkglibexecdir[@],${pkglibexecdir},g' \
+		-e 's,[@]pkgdatadir[@],${pkgdatadir},g' \
 		-e 's,[@]bash_path[@],$(bash_path),g'
 
 .PHONY: all build install uninstall test clean

@@ -6,8 +6,11 @@
   - support macOS platform
   - suppress oidc-prompt (GUI popup) for oidc-agent
   - change installer (make && make install)
+  - add HPCI configurations for oidc-agent in the distribution
+  - add HPCI SSH_CA in the distribution
 - New command
   - hpcissh-config-show
+  - hpcissh-append-ssh-ca
 - New configuration directive
   - OIDC_AGENT_USE_PW_ENV (default: yes)
   - AUTO_LOGIN_NAME (default: yes)

@@ -1,0 +1,113 @@
+#!@bash_path@
+# shellcheck shell=bash
+# shellcheck disable=SC2239
+
+set -eu
+
+CA_PUB_FILE="@pkgdatadir@/known_hosts-HPCI-SSH_CA.txt"
+GLOBAL_KNOWN_HOSTS="/etc/ssh/ssh_known_hosts"
+USER_KNOWN_HOSTS="$HOME/.ssh/known_hosts"
+
+usage() {
+    echo "Usage: $0 --system [--update]"
+    echo "       $0 --user [--update]"
+    echo "  --system: Append SSH CA to $GLOBAL_KNOWN_HOSTS (requires root privileges)"
+    echo "  --user  : Append SSH CA to $USER_KNOWN_HOSTS"
+    echo "  --update: Actually append the CA key (without this, only shows the content)"
+    exit 1
+}
+
+TARGET=""
+DO_UPDATE=false
+
+for arg in "$@"; do
+    case "$arg" in
+        --system)
+            if [ -n "$TARGET" ]; then usage; fi
+            TARGET="$GLOBAL_KNOWN_HOSTS"
+            ;;
+        --user)
+            if [ -n "$TARGET" ]; then usage; fi
+            TARGET="$USER_KNOWN_HOSTS"
+            ;;
+        --update) DO_UPDATE=true ;;
+        *) usage ;;
+    esac
+done
+
+if [ -z "$TARGET" ]; then usage; fi
+
+if [ ! -f "$CA_PUB_FILE" ]; then
+    echo "Error: CA public key not found at $CA_PUB_FILE"
+    exit 1
+fi
+
+# Check if already present (matches if a line starts with the CA key content)
+if [ -f "$TARGET" ] && awk 'NR==FNR {pat=$0; next} index($0, pat) == 1 {f=1; exit} END {exit !f}' "$CA_PUB_FILE" "$TARGET"; then
+    echo "SSH CA is already present in $TARGET. No changes needed."
+    exit 0
+fi
+
+if [ "$DO_UPDATE" = true ]; then
+    echo "Appending SSH CA to $TARGET..."
+
+    # Backup
+    if [ -f "$TARGET" ]; then
+        BACKUP_BASE="${TARGET}.backup.hpcissh"
+        BACKUP_FILE="${BACKUP_BASE}.1"
+        COUNT=1
+        while [ -f "$BACKUP_FILE" ]; do
+            COUNT=$((COUNT + 1))
+            BACKUP_FILE="${BACKUP_BASE}.${COUNT}"
+        done
+
+        if [ "$TARGET" = "$GLOBAL_KNOWN_HOSTS" ]; then
+            sudo cp -p "$TARGET" "$BACKUP_FILE"
+        else
+            cp -p "$TARGET" "$BACKUP_FILE"
+        fi
+        echo "Backup created: $BACKUP_FILE (You can delete it if not needed)"
+    fi
+
+    if [ "$TARGET" = "$GLOBAL_KNOWN_HOSTS" ]; then
+        TARGET_DIR="$(dirname "$TARGET")"
+        if [ ! -e "$TARGET_DIR" ]; then
+            echo "Running: sudo mkdir -p \"$TARGET_DIR\" && sudo chmod 755 \"$TARGET_DIR\""
+            sudo mkdir -p "$TARGET_DIR"
+            sudo chmod 755 "$TARGET_DIR"
+        fi
+        if [ ! -e "$TARGET" ]; then
+            echo "Running: sudo touch \"$TARGET\" && sudo chmod 644 \"$TARGET\""
+            sudo touch "$TARGET"
+            sudo chmod 644 "$TARGET"
+        fi
+        echo "Running: cat \"$CA_PUB_FILE\" | sudo tee -a \"$TARGET\" > /dev/null"
+        cat "$CA_PUB_FILE" | sudo tee -a "$TARGET" > /dev/null
+    else
+        DOTSSH_DIR="$(dirname "$TARGET")"
+        if [ ! -e "$DOTSSH_DIR" ]; then
+             echo "Running: mkdir -p \"$DOTSSH_DIR\" && chmod 700 \"$DOTSSH_DIR\""
+             mkdir -p "$DOTSSH_DIR"
+             chmod 700 "$DOTSSH_DIR"
+        fi
+        if [ ! -e "$TARGET" ]; then
+            echo "Running: touch \"$TARGET\" && chmod 600 \"$TARGET\""
+            touch "$TARGET"
+            chmod 600 "$TARGET"
+        fi
+        echo "Running: cat \"$CA_PUB_FILE\" >> \"$TARGET\""
+        cat "$CA_PUB_FILE" >> "$TARGET"
+    fi
+    echo "Done."
+else
+    echo "--- Dry-run: The following line will be appended to $TARGET ---"
+    cat "$CA_PUB_FILE"
+    echo "----------------------------------------------------------------"
+    echo "To apply this change, run with the --update flag:"
+
+    if [ "$TARGET" = "$GLOBAL_KNOWN_HOSTS" ]; then
+        echo "  $0 --system --update"
+    else
+        echo "  $0 --user --update"
+    fi
+fi
