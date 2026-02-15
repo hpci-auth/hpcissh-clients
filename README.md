@@ -33,7 +33,7 @@ OAuth-based SSH client toolset for HPCI.
 
 1.  **Install Homebrew** (if not already installed):
     - <https://brew.sh/>
-2.  **Install hpcissh**:
+2.  **Install hpcissh** (jwt-agent is also installed):
     ```bash
     brew tap hpci-auth/tap
     brew install hpcissh
