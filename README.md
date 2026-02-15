@@ -101,7 +101,7 @@ sudo ln -sf ${PREFIX}/share/hpcissh/oidc-agent_hpci-sub.conf  /etc/oidc-agent/is
 #### Per-user:
 
 ```bash
-PREFIX=/usr/local  # Adjust if a different prefix was used
+PREFIX=~/.local  # Adjust if a different prefix was used
 mkdir -p ~/.config/oidc-agent/issuer.config.d/
 ln -sf ${PREFIX}/share/hpcissh/oidc-agent_hpci-main.conf ~/.config/oidc-agent/issuer.config.d/hpci-main
 ln -sf ${PREFIX}/share/hpcissh/oidc-agent_hpci-sub.conf  ~/.config/oidc-agent/issuer.config.d/hpci-sub
@@ -128,7 +128,8 @@ cat ${PREFIX}/share/hpcissh/oidc-agent-v4_hpci-pubclients.config | sudo tee -a /
 #### Per-user:
 
 ```bash
-cat ${PREFIX}/share/hpcissh/oidc-agent-v4_hpci-pubclients.config >> sudo tee -a /etc/oidc-agent/pubclients.config
+PREFIX=~/.local  # Adjust if a different prefix was used
+cat ${PREFIX}/share/hpcissh/oidc-agent-v4_hpci-pubclients.config >> ~/.config/oidc-agent/pubclients.config
 ```
 
 ## Usage
@@ -146,7 +147,7 @@ Choose between `jwt-agent` or `oidc-agent`.
 
 #### Using jwt-agent
 
-1.  Ensure `USE_JWT_AGENT=yes` in `~/.hpcissh` (this is the default).
+1.  Ensure `USE_JWT_AGENT=yes` (default) in `~/.hpcissh`.
 2.  Login to the HPCI JWT server: <https://elpis.hpci.nii.ac.jp> (or sub-system: <https://elpis-c.hpci.nii.ac.jp>).
 3.  Generate a JSON Web Token (JWT) and obtain the passphrase.
 4.  Run `jwt-agent` in your terminal (copy and paste the provided command), and enter the passphrase.
@@ -160,6 +161,8 @@ To stop the agent: `jwt-agent --stop`
 3.  Initialize the agent: `eval $(oidc-agent-service use)`
 4.  Configure the HPCI account: `oidc-sshconf-hpci`
     - Follow the prompts to authenticate via your browser.
+
+To use the agent in another terminal: `eval $(oidc-agent-service use)`
 
 To stop the agent: `eval $(oidc-agent-service stop)`
 
