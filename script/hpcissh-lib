@@ -2,7 +2,7 @@
 
 set -eu -o pipefail
 
-VERSION="1.12 (2026-02-10)"
+VERSION="1.12 (2026-02-??)"
 
 AUTH_TIMES="-o NumberOfPasswordPrompts=1"
 AUTH_METHOD="-o PreferredAuthentications=keyboard-interactive"
@@ -443,7 +443,7 @@ set_OIDC_ENCRYPTION_PW() {
     if [ "${OIDC_AGENT_USE_PW_ENV}" != yes ]; then
         return
     fi
-    local confirm="$1"
+    local confirm="$1"  # yes...Encryption
     if type tput &> /dev/null; then
         RED=$(tput setaf 1)
         CYAN=$(tput setaf 6)
@@ -454,7 +454,11 @@ set_OIDC_ENCRYPTION_PW() {
         RESET=""
     fi
     while :; do
-        echo -n "${CYAN}Enter decryption password for account config '${CONF_NAME}': ${RESET}"
+        if [ "$confirm" = yes ]; then
+            echo -n "${CYAN}Enter encryption password for account configuration '${CONF_NAME}': ${RESET}"
+        else
+            echo -n "${CYAN}Enter decryption password for account config '${CONF_NAME}': ${RESET}"
+        fi
         read -s OIDC_ENCRYPTION_PW
         echo
         if [ "$confirm" = yes ]; then
