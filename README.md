@@ -11,11 +11,17 @@ OAuth-based SSH client toolset for HPCI.
 - `jwt-agent`
 - `oidc-agent` (optional)
 
-## Quick Start
+## Installation
+
+### Podman
+
+*(Detailed instructions coming soon)*
 
 ### Ubuntu 24.04 (including WSL2)
 
 *(Detailed instructions coming soon)*
+
+- **Note**: oidc-agent is version 4
 
 ### RHEL-based distributions (AlmaLinux, Rocky Linux, etc.)
 
@@ -35,9 +41,9 @@ OAuth-based SSH client toolset for HPCI.
 3.  **(Optional) Install oidc-agent**:
     - <https://indigo-dc.gitbook.io/oidc-agent/intro/macos>
 
-## Installation
+### Manual Installation
 
-### Option A: System-wide Installation (Requires root/sudo privileges)
+#### System-wide Installation (Requires root/sudo privileges)
 
 ```bash
 make
@@ -49,7 +55,7 @@ To uninstall:
 sudo make uninstall
 ```
 
-### Option B: User-local Installation (Installs to `~/.local`)
+#### User-local Installation (Installs to `~/.local`)
 
 ```bash
 make prefix=~/.local
@@ -70,24 +76,24 @@ make uninstall prefix=~/.local
 
 ## Configuration
 
-### Installing the HPCI SSH CA
+### Installing the HPCI SSH CA (public key)
 
-Update the system-wide `known_hosts` (requires root privileges):
+Update the system-wide `/etc/ssh/ssh_known_hosts` (requires root privileges):
 ```bash
 sudo hpcissh-append-ssh-ca --system --update
 ```
 
-Update the `known_hosts` for the current user:
+Update the `~/.ssh/known_hosts` for the current user:
 ```bash
 hpcissh-append-ssh-ca --user --update
 ```
 
-### Configuring oidc-agent Issuer Profiles
+### Configuring Issuer Profiles for oidc-agent version 5
 
 #### System-wide:
 
 ```bash
-PREFIX=/usr/local # Adjust if a different prefix was used
+PREFIX=/usr/local  # Adjust if a different prefix was used
 sudo ln -sf ${PREFIX}/share/hpcissh/oidc-agent_hpci-main.conf /etc/oidc-agent/issuer.config.d/hpci-main
 sudo ln -sf ${PREFIX}/share/hpcissh/oidc-agent_hpci-sub.conf  /etc/oidc-agent/issuer.config.d/hpci-sub
 ```
@@ -95,7 +101,7 @@ sudo ln -sf ${PREFIX}/share/hpcissh/oidc-agent_hpci-sub.conf  /etc/oidc-agent/is
 #### Per-user:
 
 ```bash
-PREFIX=/usr/local
+PREFIX=/usr/local  # Adjust if a different prefix was used
 mkdir -p ~/.config/oidc-agent/issuer.config.d/
 ln -sf ${PREFIX}/share/hpcissh/oidc-agent_hpci-main.conf ~/.config/oidc-agent/issuer.config.d/hpci-main
 ln -sf ${PREFIX}/share/hpcissh/oidc-agent_hpci-sub.conf  ~/.config/oidc-agent/issuer.config.d/hpci-sub
@@ -110,6 +116,21 @@ ln -sf ${HOMEBREW_PREFIX}/opt/hpcissh/share/hpcissh/oidc-agent_hpci-main.conf ${
 ln -sf ${HOMEBREW_PREFIX}/opt/hpcissh/share/hpcissh/oidc-agent_hpci-sub.conf  ${HOMEBREW_PREFIX}/etc/oidc-agent/issuer.config.d/hpci-sub
 ```
 
+### Configuring Issuer Profiles for oidc-agent version 4
+
+#### System-wide:
+
+```bash
+PREFIX=/usr/local  # Adjust if a different prefix was used
+cat ${PREFIX}/share/hpcissh/oidc-agent-v4_hpci-pubclients.config | sudo tee -a /etc/oidc-agent/pubclients.config
+```
+
+#### Per-user:
+
+```bash
+cat ${PREFIX}/share/hpcissh/oidc-agent-v4_hpci-pubclients.config >> sudo tee -a /etc/oidc-agent/pubclients.config
+```
+
 ## Usage
 
 ### Step 1: Obtain an Access Token
@@ -120,6 +141,7 @@ Choose between `jwt-agent` or `oidc-agent`.
 | :--- | :--- | :--- |
 | **Max Idle Period** | 1 week | 1 week |
 | **Max Lifetime** | 1 year | 1 week |
+| **Access Token Lifetime** | 600 sec. | 600 sec. |
 | **Agent Forwarding** | No | Yes |
 
 #### Using jwt-agent
@@ -134,8 +156,9 @@ To stop the agent: `jwt-agent --stop`
 #### Using oidc-agent
 
 1.  Set `USE_JWT_AGENT=no` in `~/.hpcissh`.
-2.  Initialize the agent: `eval $(OIDC_AGENT_OPTS=--no-autoreauthenticate oidc-agent-service use)`
-3.  Configure the HPCI account: `oidc-sshconf-hpci`
+2.  Set `OIDC_AGENT_OPTS=--no-autoreauthenticate` in `~/.config/oidc-agent/oidc-agent-service.options`.
+3.  Initialize the agent: `eval $(oidc-agent-service use)`
+4.  Configure the HPCI account: `oidc-sshconf-hpci`
     - Follow the prompts to authenticate via your browser.
 
 To stop the agent: `eval $(oidc-agent-service stop)`
@@ -217,6 +240,8 @@ The following items can be configured:
 
 ```bash
 make all install test clean uninstall prefix=$(pwd)/LOCAL
+find ./LOCAL
+rm -rf ./LOCAL
 ```
 
 On macOS:
