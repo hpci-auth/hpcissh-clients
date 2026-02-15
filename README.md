@@ -11,7 +11,42 @@ OAuth-based ssh-client commands for HPCI
 - jwt-agent
 - oidc-agent (optional)
 
+## Quick Start
+
+### Ubuntu 24.04 (works the same on WSL2)
+
+TODO
+
+### RHEL-based distribution (AlmaLinux, Rocky Linux, etc.)
+
+TODO
+
+### Homebrew on macOS
+
+hpcissh can be installed using homebrew.
+
+- Install Homebrew
+  - <https://brew.sh/>
+  - <https://docs.brew.sh/Installation>
+
+Install hpcissh
+
+```bash
+brew tap hpci-auth/tap
+brew install hpcissh
+```
+
+- (Optional) Install oidc-agent:
+  - <https://indigo-dc.gitbook.io/oidc-agent/intro/macos>
+
 ## Installation
+
+Choosing Your Installation Method:
+
+- Option A: System-wide Installation (Requires root/sudo privileges)
+- Option B: User-local Installation (No root access required, using ~/.local)
+
+### Option A: System-wide Installation
 
 ```bash
 make
@@ -21,25 +56,11 @@ sudo make install
 sudo make uninstall
 ```
 
-### For macOS
-
-hpcissh can be installed using homebrew.
+### Option B: User-local Installation
 
 ```bash
-brew tap hpci-auth/tap
-brew install hpcissh
-brew install jwt-agent
-```
-
-- Install oidc-agent:
-  - <https://indigo-dc.gitbook.io/oidc-agent/intro/macos>
-
-#### Manual installation for macOS
-
-```bash
-brew install bash jq sshpass
-make prefix=~/.local bash_path=$(brew --prefix)/bin/bash
-sudo make install prefix=~/.local
+make prefix=~/.local
+make install prefix=~/.local
 
 # Please ensure ~/.local/bin is in your PATH
 # export PATH="$HOME/.local/bin:$PATH" >> ~/.bashrc
@@ -48,16 +69,16 @@ sudo make install prefix=~/.local
 sudo make uninstall prefix=~/.local
 ```
 
-NOTE: hpcissh does not work in bash version 3 (/usr/bin/bash on macOS).
+- Overridable parameters: See `config.mk`
 
 ## Configuration
 
 ### Install HPCI SSH_CA
 
-To update /etc/ssh/ssh_known_hosts
+To update /etc/ssh/ssh_known_hosts (requires root privileges)
 
 ```
-hpcissh-append-ssh-ca --system --update
+sudo hpcissh-append-ssh-ca --system --update
 ```
 
 To update ~/.ssh/known_hosts per user
@@ -68,12 +89,25 @@ hpcissh-append-ssh-ca --user --update
 
 ### Configuration files for oidc-agent
 
+For system-wide:
+
 ```
 # (default)
 PREFIX=/usr/local
 
 sudo ln -sf ${PREFIX}/share/hpcissh/oidc-agent_hpci-main.conf /etc/oidc-agent/issuer.config.d/hpci-main
 sudo ln -sf ${PREFIX}/share/hpcissh/oidc-agent_hpci-sub.conf  /etc/oidc-agent/issuer.config.d/hpci-sub
+```
+
+For each user:
+
+```
+PREFIX=/usr/local
+
+mkdir -p ~/.config/oidc-agent/issuer.config.d/
+
+ln -sf ${PREFIX}/share/hpcissh/oidc-agent_hpci-main.conf ~/.config/oidc-agent/issuer.config.d/hpci-main
+ln -sf ${PREFIX}/share/hpcissh/oidc-agent_hpci-sub.conf  ~/.config/oidc-agent/issuer.config.d/hpci-sub
 ```
 
 Homebrew (macOS):
@@ -97,13 +131,22 @@ Please refer to "Configurable parameters" for how to change the settings.
 
 Please choose either jwt-agent or oidc-agent to proceed.
 
+- jwt-agent:
+  - Maximum Idle Period: 1 week
+  - Maximum Lifetime (Expiration Period): 1 year
+  - Agent forwarding is not supported.
+- oidc-agent:
+  - Maximum Lifetime (Expiration Period): 1 week
+  - Agent forwarding is available.
+
 #### jwt-agent
 
 - (~/.hpcissh): set USE_JWT_AGENT=yes (default)
-- Login to JWT server: <https://elpis.hpci.nii.ac.jp>
+- Login to JWT server (Web UI): <https://elpis.hpci.nii.ac.jp>
   - or use sub system: <https://elpis-c.hpci.nii.ac.jp>
 - Generate a JSON Web Token (JWT) and get the passphrase
-- Run jwt (Copy and Paste the command line, and input the passphrase)
+- Run jwt-agent on your terminal
+  - Copy from Web UI and Paste the command line, and input the passphrase
 
 Example:
 
@@ -111,20 +154,60 @@ Example:
 jwt-agent -s https://elpis.hpci.nii.ac.jp -l hpci00????
 Passphrase:
 Output JWT to /tmp/jwt_user_u501/token.jwt
+```
 
-# (To stop)
+To stop jwt-agent
+
+```
 jwt-agent --stop
 ```
 
 #### oidc-agent
 
-- (~/.hpcissh): set USE_JWT_AGENT=no
+- (~/.hpcissh): set `USE_JWT_AGENT=no`
+- `eval $(OIDC_AGENT_OPTS=--no-autoreauthenticate oidc-agent-service use)`
+- `oidc-sshconf-hpci`
+  - Enter encryption password
+  - Confirm encryption password
+  - Visit URL (OpenID provider)
+  - Login
+  - Enter the code
 
-TODO
+Example:
+
+```
+$ oidc-sshconf-hpci
+Enter encryption password for account configuration 'hpci': 
+Confirm encryption password: 
+Generating account configuration ...
+accepted
+
+Using a browser on any device, visit:
+https://metis.hpci.nii.ac.jp.test/auth/realms/HPCI/device
+
+And enter the code: TLXE-QTHF
+Alternatively you can use the following QR code to visit the above listed URL.
+
+[QR code]
+```
+
+To delete encrypted configuration for HPCI:
+
+```
+$ oidc-gen -d hpci
+Enter decryption password for account config 'hpci': 
+Do you really want to delete this configuration? [No/yes/quit]: 
+```
+
+To stop oidc-agent:
+
+```
+eval $(oidc-agent-service stop)
+```
 
 ### Step 2: Run hpcissh
 
-Example:
+Usage:
 
 ```
 hpcissh <HOSTNAME> [command,args]...
@@ -137,8 +220,37 @@ hpcissh REMOTE_USER@<HOSTNAME> [command,args]...
 - hpcisftp
 - hpcissh-config-show
 - hpcissh-version
-- hpci-parse-token
 - hpci-get-userinfo
+
+Examples:
+
+```
+$ hpci-parse-token
+{
+  "alg": "ES256",
+  "typ": "JWT",
+  "kid": "22kB6oAkPiHL4hrJEbc924yyvpNIWcnIajfqH2tQ4-c"
+}
+{
+  "exp": 1771163157,
+  "iat": 1771162557,
+  "auth_time": 1771162555,
+  "jti": "ofrtdg:30797276-abe9-2956-?????????????????",
+  "iss": "https://metis.hpci.nii.ac.jp.test/auth/realms/HPCI",
+  "aud": "hpci",
+  "sub": "15fb569a-a483-4ac5-a49e-????????????",
+  "typ": "Bearer",
+  "azp": "hpci-pub",
+  "sid": "50bd00d9-fc73-6749-6bcc-efaf76ad6173",
+  "acr": "1",
+  "scope": "scitokens hpci openid offline_access",
+  "hpci.ver": "1.0",
+  "hpci.id": "hpci00????",
+  "ver": "scitokens:2.0",
+  "nbf": 0
+}
+INFO: remaining time: 543 sec.
+```
 
 ## Configurable parameters
 
