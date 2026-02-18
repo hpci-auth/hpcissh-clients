@@ -15,17 +15,17 @@ OAuth-based SSH client toolset for HPCI.
 
 ### Podman
 
-*(Detailed instructions coming soon)*
+*(Detailed instructions coming soon.)*
 
 ### Ubuntu 24.04 (including WSL2)
 
-*(Detailed instructions coming soon)*
+*(Detailed instructions coming soon.)*
 
 - **Note**: oidc-agent is version 4
 
 ### RHEL-based distributions (AlmaLinux, Rocky Linux, etc.)
 
-*(Detailed instructions coming soon)*
+*(Detailed instructions coming soon.)*
 
 ### macOS (via Homebrew)
 
@@ -136,19 +136,19 @@ cat ${PREFIX}/share/hpcissh/oidc-agent-v4_hpci-pubclients.config >> ~/.config/oi
 
 ### Step 1: Obtain an Access Token
 
-Choose between `jwt-agent` or `oidc-agent`.
+Choose between `jwt-agent` and `oidc-agent`.
 
 | Feature | `jwt-agent` | `oidc-agent` |
 | :--- | :--- | :--- |
-| **Max Idle Period** | 1 week | 1 week |
-| **Max Lifetime** | 1 year | 1 week |
-| **Access Token Lifetime** | 600 sec. | 600 sec. |
+| **Max idle period** | 1 week | 1 week |
+| **Max lifetime** | 1 year | 1 week |
+| **Access token lifetime** | 600 sec. | 600 sec. |
 | **Agent Forwarding** | No | Yes |
 
 #### Using jwt-agent
 
 1.  Ensure `USE_JWT_AGENT=yes` (default) in `~/.hpcissh`.
-2.  Login to the HPCI JWT server: <https://elpis.hpci.nii.ac.jp> (or sub-system: <https://elpis-c.hpci.nii.ac.jp>).
+2.  Log in to the HPCI JWT server: <https://elpis.hpci.nii.ac.jp> (or sub-system: <https://elpis-c.hpci.nii.ac.jp>).
 3.  Generate a JSON Web Token (JWT) and obtain the passphrase.
 4.  Run `jwt-agent` in your terminal (copy and paste the provided command), and enter the passphrase.
 
@@ -179,7 +179,7 @@ hpcissh REMOTE_USER@<HOSTNAME> [command,args]...
 ### Other Commands
 
 - `hpciscp`: Secure copy
-- `hpcisftp`: Secure FTP
+- `hpcisftp`: Secure file transfer (SFTP)
 - `hpcissh-config-show`: Display current configurations
 - `hpcissh-version`: Show version info
 - `hpci-get-userinfo`: Retrieve OIDC user information

@@ -1,0 +1,76 @@
+#!@bash_path@
+
+set -eu
+
+PARENT_CMD=$(ps -p $PPID -o comm=)
+PARENT_CMD=$(basename -- "$PARENT_CMD" | tr -d '-')
+SHELL_TYPE=${SHELL_TYPE:-}
+version=${version:-}  # tcsh version
+
+if [[ "$SHELL_TYPE" == "csh" || "$SHELL_TYPE" == "tcsh" ]]; then
+    DETECTED_SHELL="csh"
+elif [[ "$PARENT_CMD" == *"tcsh"* || "$PARENT_CMD" == *"csh"* ]]; then
+    DETECTED_SHELL="csh"
+elif [ -n "$version" ] && [[ "$version" == *"tcsh"* ]]; then
+    DETECTED_SHELL="tcsh"
+else
+    DETECTED_SHELL="sh"
+fi
+
+OIDC_AGENT_SERVICE=${OIDC_AGENT_SERVICE:-oidc-agent-service}
+
+# TODO check `OIDC_AGENT_OPTS=--no-autoreauthenticate` in `~/.config/oidc-agent/oidc-agent-service.options`.
+
+# TODO auto pubclients
+
+
+
+# (Example of OPERATION=use)
+# OIDC_SOCK=/var/folders/6d/dlm7c25j26l60wzvj58ndrmr0000gn/T//oidc-agent-service-501/oidc-agent.sock; export OIDC_SOCK;
+# OIDCD_PID=11593; export OIDCD_PID;
+# OIDCD_PID_FILE=/var/folders/6d/dlm7c25j26l60wzvj58ndrmr0000gn/T//oidc-agent-service-501/oidc-agent.pid; export OIDCD_PID_FILE;
+# /bin/cat /var/folders/6d/dlm7c25j26l60wzvj58ndrmr0000gn/T//oidc-agent-service-501/oidc-agent.pid
+
+# (Example of OPERATION=stop)
+# unset OIDC_SOCK;
+# unset OIDCD_PID;
+# unset OIDCD_PID_FILE;
+
+OPERATION="$1"
+
+case "$DETECTED_SHELL" in
+    csh )
+        case "$OPERATION" in
+            stop | kill)
+                if [ -z "${OIDCD_PID_FILE:-}" ]; then
+                    exit 0
+                fi
+                OIDCD_PID=$(cat "${OIDCD_PID_FILE}")
+                ;;
+        esac
+        set +e
+        eval $("${OIDC_AGENT_SERVICE}" "${@}") >&2
+        ret=$?
+        if [ $ret -ne 0 ]; then
+            exit $ret
+        fi
+        case "$OPERATION" in
+            use | start | restart | restart-s )
+                OIDCD_PID=$(cat "${OIDCD_PID_FILE}")
+                echo "setenv OIDC_SOCK ${OIDC_SOCK};"
+                echo "setenv OIDCD_PID ${OIDCD_PID};"
+                echo "setenv OIDCD_PID_FILE ${OIDCD_PID_FILE};"
+                ;;
+            stop | kill)
+                # echo "Agent pid ${OIDCD_PID} killed;" >&2
+                echo "unsetenv OIDC_SOCK;"
+                echo "unsetenv OIDCD_PID;"
+                echo "unsetenv OIDCD_PID_FILE;"
+                ;;
+        esac
+        exit $ret
+        ;;
+    * )
+        exec "${OIDC_AGENT_SERVICE}" "${@}"
+        ;;
+esac
