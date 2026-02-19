@@ -76,33 +76,28 @@ make uninstall prefix=~/.local
 
 ## Configuration
 
-### Installing the HPCI SSH CA (public key)
+### Installing the HPCI SSH CA (Public Key)
 
-This procedure is not required by default.
+By default, this procedure is **not required** because `hpcissh` automatically uses the HPCI SSH CA via the `KnownHostsCommand` SSH option (controlled by the `HPCISSH_AUTO_KNOWN_HOSTS` parameter).
 
-If `HPCISSH_AUTO_KNWON_HOSTS=false` is set, execute the following:
+However, if you set `HPCISSH_AUTO_KNOWN_HOSTS=no` or wish to perform a manual installation, execute the following:
 
 Update the system-wide `/etc/ssh/ssh_known_hosts` (requires root privileges):
-
 ```bash
 sudo hpcissh-append-ssh-ca --system --update
 ```
 
 Update the `~/.ssh/known_hosts` for the current user:
-
 ```bash
 hpcissh-append-ssh-ca --user --update
 ```
 
 ### Configuring Issuer Profiles for oidc-agent
 
-The following files are created automatically.
+The following files are managed automatically by the `hpci-oidc-agent-service` command.
 
-- For oidc-agent version 4
-  - `~/.config/oidc-agent/pubclients.config`
-- For oidc-agent version 5
-  - `~/.config/oidc-agent/issuer.config.d/hpci-main`
-  - `~/.config/oidc-agent/issuer.config.d/hpci-sub`
+- **For oidc-agent v4**: `~/.config/oidc-agent/pubclients.config`
+- **For oidc-agent v5**: `~/.config/oidc-agent/issuer.config.d/hpci-main` and `hpci-sub`
 
 ## Usage
 
@@ -127,16 +122,15 @@ Choose between `jwt-agent` and `oidc-agent`.
 To stop the agent: `jwt-agent --stop`
 
 #### Step 1-2: Using oidc-agent
-
 1.  Set `USE_JWT_AGENT=no` in `~/.hpcissh`.
-2.  (Optional) To use sub-system: Set `OIDC_ISSUER="https://metis-c.hpci.nii.ac.jp/auth/realms/HPCI"` in `~/.hpcissh`.
-3.  Initialize the agent: `eval $(hpci-oidc-agent-service use)`
-4.  Generates HPCI account configurations for oidc-agent: `oidc-sshconf-hpci`
-    - Follow the prompts to log in to the HPCI OpenID provider via your web browser.
+2.  (Optional) To use the sub-system: Set `OIDC_ISSUER="https://metis-c.hpci.nii.ac.jp/auth/realms/HPCI"` in `~/.hpcissh`.
+3.  Initialize the agent: `eval $(oidc-agent-service use)`
+4.  Generate HPCI account configurations for the agent: `oidc-sshconf-hpci`
+    - Input encryption password
+    - Follow the prompts to authenticate via your web browser.
 
-To use the oidc-agent in another terminal: `eval $(oidc-agent-service use)`
-
-To stop the oidc-agent: `eval $(oidc-agent-service stop)`
+To use `oidc-agent` in another terminal: `eval $(oidc-agent-service use)`
+To stop the agent: `eval $(oidc-agent-service stop)`
 
 ### Step 2: Connect via hpcissh
 
@@ -209,8 +203,8 @@ The following items can be configured:
 - **`HPCISSH_AUTO_LOGIN_NAME`**
   - Automatically resolve and append the remote login name.
   - Type: yes/no, Default: `yes`
-- **`HPCISSH_AUTO_KNWON_HOSTS`**
-  - Automatically use HPCI SSH CA (public key)
+- **`HPCISSH_AUTO_KNOWN_HOSTS`**
+  - Automatically use the HPCI SSH CA (public key) via `KnownHostsCommand`.
   - Type: yes/no, Default: `yes`
 
 ## For Developers
