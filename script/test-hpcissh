@@ -117,6 +117,7 @@ test_convert_scp_arg "scp -v user1@host1:a user2@host2:b host3:c dir" scp -v hos
 test_convert_scp_arg "INVALID SYNTAX" scp
 test_convert_scp_arg "INVALID SYNTAX" scp file
 
+test_convert_sftp_arg "INVALID SYNTAX" sftp
 test_convert_sftp_arg "sftp user1@host1" sftp host1
 test_convert_sftp_arg "sftp -v user1@host1" sftp -v host1
 test_convert_sftp_arg "sftp -P 2222 user1@host1" sftp -P 2222 host1
@@ -125,7 +126,6 @@ test_convert_sftp_arg "sftp user2@host2:file" sftp host2:file
 test_convert_sftp_arg "sftp user2@host2:file file" sftp host2:file file
 test_convert_sftp_arg 'sftp "user2@host2:a b"' sftp "host2:a b"
 test_convert_sftp_arg 'sftp "user2@host2:a b" "c d"' sftp "host2:a b" "c d"
-test_convert_sftp_arg "INVALID SYNTAX" sftp
 
 if [ $NG -gt 0 ]; then
     echo "Some tests failed."
