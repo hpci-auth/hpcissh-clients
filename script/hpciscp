@@ -11,7 +11,9 @@ usage() {
 init_common "${@}"
 get_token
 
-RAW_ARGV=("scp")
+SCP_CMD="${SCP_CMD:-scp}"
+
+RAW_ARGV=("${SCP_CMD}")
 RAW_ARGV+=("${@}")
 
 ARGV=()
@@ -21,7 +23,7 @@ done
 ARGV=("${ARGV[@]:1}")
 
 set +e
-runssh scp -P ${HPCISSH_PORT} ${SSH_BASIC_OPTS} "${ARGV[@]}"
+runssh "${SCP_CMD}" -P ${HPCISSH_PORT} "${SSH_BASIC_OPTS[@]}" "${ARGV[@]}"
 RESULT=${?}
 verify_hostname $RESULT
 set -e

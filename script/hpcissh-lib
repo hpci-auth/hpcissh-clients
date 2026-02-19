@@ -2,13 +2,18 @@
 
 set -eu -o pipefail
 
-VERSION="1.12 (2026-02-??)"
+VERSION="1.12.0 (2026-02-??)"
 
-AUTH_TIMES="-o NumberOfPasswordPrompts=1"
-AUTH_METHOD="-o PreferredAuthentications=keyboard-interactive"
-FORWARD_BEHAVIOR="-o ExitOnForwardFailure=yes"
-SSH_BASIC_OPTS="${AUTH_METHOD} ${AUTH_TIMES}"
-SSH_OPTS="${SSH_BASIC_OPTS} ${FORWARD_BEHAVIOR}"
+CA_PUB_FILE="@pkgdatadir@/known_hosts-HPCI-SSH_CA.txt"
+CAT_CMD="${CAT_CMD:-/bin/cat}"
+
+# ssh options for hpcissh,hpciscp,hpcisftp
+KNOWN_HOSTS_CMD=("-o" "KnownHostsCommand=${CAT_CMD} '${CA_PUB_FILE}'")
+SSH_BASIC_OPTS=("-o" "PreferredAuthentications=keyboard-interactive")
+SSH_BASIC_OPTS+=("-o" "NumberOfPasswordPrompts=1")
+
+# for hpcissh
+FORWARD_BEHAVIOR=("-o" "ExitOnForwardFailure=yes")
 
 OAUTH_SSH_AT_PROMPT="Enter your OAuth token:"
 
@@ -240,10 +245,26 @@ load_common_config() {
 
     set_param HPCISSH_PORT "2222"
     set_param HPCISSH_TOKEN_INPUT "sshpass"  # sshpass or SSH_ASKPASS
-    set_param AUTO_LOGIN_NAME "yes"  # no ... speedup
+    set_param HPCISSH_AUTO_LOGIN_NAME "yes"  # no ... speedup
+    set_param HPCISSH_AUTO_KNWON_HOSTS "yes"  # yes ... use KnownHostsCommand
 
-    DEBUG "OIDC_SOCK=${OIDC_SOCK:-}"
-    DEBUG "OIDCD_PID=${OIDCD_PID:-}"
+    # ===== Parameters for commands related to hpcissh-clients =====
+    # (Call set_param() to display the parameters by hpci-config-show)
+    #
+    # For oidc-agent
+    #   https://indigo-dc.gitbook.io/oidc-agent/configuration/directory
+    set_param OIDC_CONFIG_DIR "${OIDC_CONFIG_DIR:-}"
+    set_param OIDC_SOCK "${OIDC_SOCK:-}"
+    set_param OIDCD_PID "${OIDCD_PID:-}"
+    set_param OIDCD_PID_FILE "${OIDCD_PID_FILE:-}"
+    # For jwt-agent
+    #   http://oss-tsukuba.org/gfarm/share/doc/gfarm/html/en/user/auth-sasl.html
+    set_param JWT_USER_PATH "${JWT_USER_PATH:-}"
+
+    if [ "${HPCISSH_AUTO_KNWON_HOSTS}" = yes ]; then
+         SSH_BASIC_OPTS+=("${KNOWN_HOSTS_CMD[@]}")
+    fi
+    SSH_OPTS+=("${SSH_BASIC_OPTS[@]}" "${FORWARD_BEHAVIOR[@]}")
 }
 
 init_common() {
@@ -392,7 +413,7 @@ get_mtime() {
 }
 
 load_local_accounts() {
-    if [ "${AUTO_LOGIN_NAME}" != yes ]; then
+    if [ "${HPCISSH_AUTO_LOGIN_NAME}" != yes ]; then
         DEBUG "Skip load_local_accounts"
         return
     fi

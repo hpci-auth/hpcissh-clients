@@ -6,22 +6,25 @@ source ${pkglibexecdir:-@pkglibexecdir@}/hpcissh-lib
 
 usage() {
     echo "Usage: ${0} [sftp command option] host"
+    echo "NOTE: The -b option is unavailable"
 }
 
 init_common "${@}"
 get_token
 
-RAW_ARGV=("sftp")
+SFTP_CMD="${SFTP_CMD:-sftp}"
+
+RAW_ARGV=("${SFTP_CMD}")
 RAW_ARGV+=("${@}")
 
 ARGV=()
-for arg in `convert_sftp_arg "${RAW_ARGV[@]}"`; do
+for arg in $(convert_sftp_arg "${RAW_ARGV[@]}"); do
     ARGV+=("$arg")
 done
 ARGV=("${ARGV[@]:1}")
 
 set +e
-runssh sftp -P ${HPCISSH_PORT} ${SSH_BASIC_OPTS} "${ARGV[@]}"
+runssh "${SFTP_CMD}" -P ${HPCISSH_PORT} "${SSH_BASIC_OPTS[@]}" "${ARGV[@]}"
 RESULT=${?}
 verify_hostname $RESULT
 set -e

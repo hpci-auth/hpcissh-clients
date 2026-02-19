@@ -4,16 +4,17 @@
 
 - Update feature
   - support macOS platform
+  - automatically use HPCI SSH CA (no need to edit known_hosts)
   - suppress oidc-prompt (GUI popup) for oidc-agent
   - change installer (make && make install)
   - add HPCI configurations for oidc-agent in the distribution
-  - add HPCI SSH_CA in the distribution
 - New command
   - hpcissh-config-show
   - hpcissh-append-ssh-ca
 - New configuration directive
   - OIDC_AGENT_USE_PW_ENV (default: yes)
-  - AUTO_LOGIN_NAME (default: yes)
+  - HPCISSH_AUTO_LOGIN_NAME (default: yes)
+  - HPCISSH_AUTO_KNWON_HOSTS (default: yes)
 
 ## version 1.11 (2024-10-30)
 

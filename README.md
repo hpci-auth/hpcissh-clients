@@ -233,13 +233,16 @@ The following items can be configured:
 - **`HPCISSH_TOKEN_INPUT`**
   - Method for token input: `sshpass` or `SSH_ASKPASS`.
   - Type: string, Default: `sshpass`
-- **`AUTO_LOGIN_NAME`**
+- **`HPCISSH_AUTO_LOGIN_NAME`**
   - Automatically resolve and append the remote login name.
+  - Type: yes/no, Default: `yes`
+- **`HPCISSH_AUTO_KNWON_HOSTS`**
+  - Automatically use HPCI SSH CA (public key)
   - Type: yes/no, Default: `yes`
 
 ## For Developers
 
-### Testing
+### Offline testing
 
 ```bash
 make all install test clean uninstall prefix=$(pwd)/LOCAL
@@ -252,4 +255,15 @@ On macOS:
 make all install test clean uninstall prefix=$(pwd)/LOCAL bash_path=$(brew --prefix)/bin/bash
 find ./LOCAL
 rm -rf ./LOCAL
+```
+
+### Online testing
+
+```bash
+# (Run jwt-agent)
+# (Run oidc-agent)
+# (Install hpcissh to $(pwd)/LOCAL)
+
+./run-tests.sh --prefix ./LOCAL ??????.ac.jp
+./run-tests.sh --prefix ./LOCAL ??????.ac.jp --run
 ```

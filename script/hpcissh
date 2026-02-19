@@ -13,7 +13,9 @@ usage() {
 init_common "${@}"
 get_token
 
-RAW_ARGV=("ssh")
+SSH_CMD="${SSH_CMD:-ssh}"
+
+RAW_ARGV=("${SSH_CMD}")
 RAW_ARGV+=("${@}")
 
 ARGV=()
@@ -24,6 +26,7 @@ ARGV=("${ARGV[@]:1}")
 
 DEBUG "ARGV=${ARGV[@]}"
 
+# use -t for "hpcissh ... hpcissh ..."
 for i in `seq 1 ${#}`;
 do
     set +e
@@ -33,7 +36,7 @@ do
     set -e
     if [ ${RESULT} -eq 0 ];
     then
-        SSH_OPTS="${SSH_OPTS} -t"
+        SSH_OPTS+=("-t")
         break;
     fi
 
@@ -43,7 +46,7 @@ do
     set -e
     if [ ${RESULT} -eq 0 ];
     then
-        SSH_OPTS="${SSH_OPTS} -t"
+        SSH_OPTS+=("-t")
         break;
     fi
 done
@@ -52,28 +55,27 @@ if [ -n "${OIDC_SOCK:-}" ];
 then  # use oidc-agent
     if [ "${OIDC_AGENT_FORWARD}" == "yes" ];
     then
-	#SUB_CLAIM=`jwt decode ${OIDC_AT} | grep '"sub":' | awk '{ print $2 }' | sed -e 's/[",]//g'`
-	SUB_CLAIM=`get_claim sub`
+        SUB_CLAIM=$(get_claim sub)
 
         # hpcissh have to forward oidc-agent's unix domain socket to /tmp
         # on remote host as ssh can't create a parent directory of
         # forwarded unix domain socket
-        REMOTE_OIDC_SOCK=`mktemp -u /tmp/oidc-agent.${SUB_CLAIM}.XXXXXXXXXXXX.sock`
-        REMOTE_FORWARD="-R ${REMOTE_OIDC_SOCK}:${OIDC_SOCK}"
-        SSH_OPTS="${SSH_OPTS} ${REMOTE_FORWARD} -o SendEnv=OIDC_SOCK"
+        REMOTE_OIDC_SOCK=$(mktemp -u /tmp/oidc-agent.${SUB_CLAIM}.XXXXXXXXXXXX.sock)
+        SSH_OPTS+=("-R" "${REMOTE_OIDC_SOCK}:${OIDC_SOCK}")
+        SSH_OPTS+=("-o" "SendEnv=OIDC_SOCK")
         OIDC_SOCK=${REMOTE_OIDC_SOCK}
     fi
-    SSH_OPTS="${SSH_OPTS} -o SendEnv=OIDC_AGENT_CONF_NAME"
+    SSH_OPTS+=("-o" "SendEnv=OIDC_AGENT_CONF_NAME")
 fi
 
-SSH_OPTS="${SSH_OPTS} -p ${HPCISSH_PORT}"
+SSH_OPTS+=("-p" "${HPCISSH_PORT}")
 
 set +e
-runssh ssh ${SSH_OPTS} "${ARGV[@]}"
+runssh "${SSH_CMD}" "${SSH_OPTS[@]}" "${ARGV[@]}"
 RESULT=${?}
 verify_hostname $RESULT
 #if [ ${RESULT} -eq 6 ]; then
-#    ssh ${SSH_OPTS} "${ARGV[@]}"
+#    "${SSH_CMD}" "${SSH_OPTS[@]}" "${ARGV[@]}"
 #fi
 set -e
 exit $RESULT
