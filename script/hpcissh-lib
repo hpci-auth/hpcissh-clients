@@ -48,6 +48,11 @@ ERROR() {
     echo >&2 "ERROR:" "$@"
 }
 
+FATAL() {
+    echo >&2 "ERROR:" "$@"
+    exit 1
+}
+
 _get_token() {
     local CHECK_EXPIRED="$1"
 
@@ -175,10 +180,10 @@ set_param() {
     # For example, this is the same as HPCISSH_DEBUG_X=${HPCISSH_DEBUG_X:-no}
     if [[ -v "${name}" ]]; then
         declare -g "${name}=${!name}"
-        DEBUG "set_param[num=${num}]: ${name}=${!name} (customized {default:${default_val}})"
+        DEBUG "set_param[num=${num}]: ${name}=\"${!name}\" (customized {default:${default_val}})"
     else
         declare -g "${name}=${default_val}"
-        DEBUG "set_param[num=${num}]: ${name}=${!name} (use default)"
+        DEBUG "set_param[num=${num}]: ${name}=\"${!name}\" (use default)"
     fi
 }
 
@@ -186,7 +191,7 @@ config_show() {
     local key
     for key in "${HPCISSH_PARAM_KEY_LIST[@]}"; do
         if [[ -v "${key}" ]]; then
-            echo "${key}=${!key}"
+            echo "${key}=\"${!key}\""
         fi
     done
 }
@@ -199,25 +204,39 @@ load_common_config() {
             ERROR "${HPCISSH_CONF} is writable by others.  Run 'chmod 600 ${HPCISSH_CONF}'."
             exit 1
         fi
-        # overridable by environment variables
-        local keyval
-        local key
-        local val
-        for keyval in $(cat "$HPCISSH_CONF"); do
-            [[ "$keyval" =~ "=" ]] || continue
-            echo "$keyval" | grep -q "^\s*#.*$" && continue
-            key=${keyval%=*}
-            val=${keyval#*=}
-            # skip semicolon
-            [[ "$key" =~ [\;] ]] && continue
-            [[ "$val" =~ [\;] ]] && continue
+        # Overridable by environment variables
+        while read -r line || [[ -n "${line}" ]]; do
+            # Skip comments and empty lines
+            [[ "${line}" =~ ^[[:space:]]*# ]] && continue
+            [[ "${line}" =~ ^[[:space:]]*$ ]] && continue
+            [[ "${line}" != *"="* ]] && continue
+
+            local key="${line%%=*}"
+            local val="${line#*=}"
+
+            # Trim leading/trailing whitespace
+            key="${key#"${key%%[![:space:]]*}"}"
+            key="${key%"${key##*[![:space:]]}"}"
+            val="${val#"${val%%[![:space:]]*}"}"
+            val="${val%"${val##*[![:space:]]}"}"
+
+            # Remove surrounding double quotes from value
+            if [[ "$val" =~ ^\".*\"$ ]]; then
+                val="${val#\"}"
+                val="${val%\"}"
+            fi
+
+            # skip semicolon (security measure)
+            [[ "${key}" =~ [\;] ]] && FATAL "${HPCISSH_CONF}: Invalid key: ${key}"
+            [[ "${val}" =~ [\;] ]] && FATAL "${HPCISSH_CONF}: Invalid value: ${val}"
+
             if [[ -v "${key}" ]]; then
-                DEBUG "${key}=${!key} (environment variable is specified)"
+                DEBUG "${key}=\"${!key}\" (environment variable is specified)"
             else
                 declare -g "${key}=${val}"
-                DEBUG "${key}=${val} ($HPCISSH_CONF)"
+                DEBUG "${key}=\"${val}\" (${HPCISSH_CONF})"
             fi
-        done
+        done < "${HPCISSH_CONF}"
     fi
 
     # Use a default value if not set.
@@ -252,7 +271,8 @@ load_common_config() {
     # (Call set_param() to display the parameters by hpci-config-show)
     #
     # For oidc-agent
-    #   https://indigo-dc.gitbook.io/oidc-agent/configuration/directory
+    set_param OIDC_AGENT_OPTS "--no-autoreauthenticate"
+    # https://indigo-dc.gitbook.io/oidc-agent/configuration/directory
     set_param OIDC_CONFIG_DIR "${OIDC_CONFIG_DIR:-}"
     set_param OIDC_SOCK "${OIDC_SOCK:-}"
     set_param OIDCD_PID "${OIDCD_PID:-}"
@@ -261,6 +281,7 @@ load_common_config() {
     #   http://oss-tsukuba.org/gfarm/share/doc/gfarm/html/en/user/auth-sasl.html
     set_param JWT_USER_PATH "${JWT_USER_PATH:-}"
 
+    # Update global variables
     if [ "${HPCISSH_AUTO_KNWON_HOSTS}" = yes ]; then
          SSH_BASIC_OPTS+=("${KNOWN_HOSTS_CMD[@]}")
     fi
@@ -808,7 +829,7 @@ decode_jwt_cached() {
 
 get_claim() {
     local name="$1"
-    echo "$OIDC_AT_DECODED" | grep "\"${name}\":" | awk '{ print $2 }' | sed -e 's/[",]//g'
+    echo "$OIDC_AT_DECODED" | grep "\"${name}\":" | awk '{ print $2 }' | sed -e 's/[",]//g'  # " for Editor
 }
 
 check_expired() {

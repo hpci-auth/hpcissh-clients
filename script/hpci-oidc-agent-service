@@ -2,6 +2,9 @@
 
 set -eu
 
+source ${pkglibexecdir:-@pkglibexecdir@}/hpcissh-lib
+load_common_config
+
 PARENT_CMD=$(ps -p $PPID -o comm=)
 PARENT_CMD=$(basename -- "$PARENT_CMD" | tr -d '-')
 SHELL_TYPE=${SHELL_TYPE:-}
@@ -17,13 +20,62 @@ else
     DETECTED_SHELL="sh"
 fi
 
+# Overridable
 OIDC_AGENT_SERVICE=${OIDC_AGENT_SERVICE:-oidc-agent-service}
 
-# TODO check `OIDC_AGENT_OPTS=--no-autoreauthenticate` in `~/.config/oidc-agent/oidc-agent-service.options`.
+# Find oidc-agent dir
+# (SEE ALSO: oidc-agent-service)
+if [ -n "${OIDC_CONFIG_DIR:-}" ]; then
+    if [ ! -d "${OIDC_CONFIG_DIR}" ]; then
+        ERROR "${OIDC_CONFIG_DIR}: No such directory"
+        exit 1
+    fi
+    MY_OIDC_CONFIG_DIR=${OIDC_CONFIG_DIR}
+else
+    if [ -d "${HOME}/.config" ]; then
+        MY_OIDC_CONFIG_DIR="${HOME}/.config/oidc-agent"
+    else
+        MY_OIDC_CONFIG_DIR="${HOME}/.oidc-agent"
+    fi
+fi
 
-# TODO auto pubclients
+# mkdir -p "${MY_OIDC_CONFIG_DIR}"
+mkdir -p "${MY_OIDC_CONFIG_DIR}/issuer.config.d/"
 
+# For oidc-agent v5
+check_and_link() {
+    local src="$1"
+    local dst="$2"
 
+    if [ ! -e "$dst" ]; then
+        INFO "Added to ${dst}"
+    fi
+    # Overwrite everytime
+    ln -sf "${src}" "${dst}"
+}
+check_and_link "@pkgdatadir@/oidc-agent_hpci-main.conf" "${MY_OIDC_CONFIG_DIR}/issuer.config.d/hpci-main"
+check_and_link "@pkgdatadir@/oidc-agent_hpci-sub.conf"  "${MY_OIDC_CONFIG_DIR}/issuer.config.d/hpci-sub"
+
+# For oidc-agent v4
+append_line_if_missing() {
+    local line="$1"
+    local file="$2"
+
+    if [ ! -e "${file}" ]; then
+        touch "${file}"
+    fi
+    if grep -qxF "${line}" "${file}"; then
+        DEBUG "Already exists in ${file}: ${line}"
+    else
+        echo "${line}" >> "${file}"
+        INFO "Added to ${file}: ${line}"
+    fi
+}
+PUBCLIENTS_V4_HPCI="@pkgdatadir@/oidc-agent-v4_hpci-pubclients.config"
+PUBCLIENTS_V4_CONFIG="${MY_OIDC_CONFIG_DIR}/pubclients.config"
+while read -r line || [[ -n "${line}" ]]; do
+    append_line_if_missing "${line}" "${PUBCLIENTS_V4_CONFIG}"
+done < "${PUBCLIENTS_V4_HPCI}"
 
 # (Example of OPERATION=use)
 # OIDC_SOCK=/var/folders/6d/dlm7c25j26l60wzvj58ndrmr0000gn/T//oidc-agent-service-501/oidc-agent.sock; export OIDC_SOCK;
@@ -37,6 +89,10 @@ OIDC_AGENT_SERVICE=${OIDC_AGENT_SERVICE:-oidc-agent-service}
 # unset OIDCD_PID_FILE;
 
 OPERATION="$1"
+
+# from hpcissh-lib
+DEBUG "OIDC_AGENT_OPTS=${OIDC_AGENT_OPTS}"
+export OIDC_AGENT_OPTS
 
 case "$DETECTED_SHELL" in
     csh )
@@ -71,6 +127,7 @@ case "$DETECTED_SHELL" in
         exit $ret
         ;;
     * )
+        #exec bash -x `which "${OIDC_AGENT_SERVICE}"` "${@}"
         exec "${OIDC_AGENT_SERVICE}" "${@}"
         ;;
 esac

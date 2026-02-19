@@ -3,12 +3,13 @@
 ## version 1.12 (2026-02-??)
 
 - Update feature
-  - support macOS platform
-  - automatically use HPCI SSH CA (no need to edit known_hosts)
+  - support macOS platform using Homebrew
+  - automatically use HPCI SSH CA (no need to edit the known_hosts file anymore)
+  - By using hpci-oidc-agent-service, HPCI configurations for oidc-agent is added automatically
   - suppress oidc-prompt (GUI popup) for oidc-agent
   - change installer (make && make install)
-  - add HPCI configurations for oidc-agent in the distribution
 - New command
+  - hpci-oidc-agent-service
   - hpcissh-config-show
   - hpcissh-append-ssh-ca
 - New configuration directive

@@ -3,6 +3,7 @@ bin_SCRIPTS = hpcissh hpciscp hpcisftp hpcissh-version \
 	oidc-sshconf oidc-sshconf-hpci oidc-token-hpci \
 	hpcissh-config-show \
 	hpcissh-append-ssh-ca \
+	hpci-oidc-agent-service \
 	test-hpcissh
 pkglibexec_SCRIPTS = hpcissh-lib
 

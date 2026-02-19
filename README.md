@@ -78,59 +78,31 @@ make uninstall prefix=~/.local
 
 ### Installing the HPCI SSH CA (public key)
 
+This procedure is not required by default.
+
+If `HPCISSH_AUTO_KNWON_HOSTS=false` is set, execute the following:
+
 Update the system-wide `/etc/ssh/ssh_known_hosts` (requires root privileges):
+
 ```bash
 sudo hpcissh-append-ssh-ca --system --update
 ```
 
 Update the `~/.ssh/known_hosts` for the current user:
+
 ```bash
 hpcissh-append-ssh-ca --user --update
 ```
 
-### Configuring Issuer Profiles for oidc-agent version 5
+### Configuring Issuer Profiles for oidc-agent
 
-#### System-wide:
+The following files are created automatically.
 
-```bash
-PREFIX=/usr/local  # Adjust if a different prefix was used
-sudo ln -sf ${PREFIX}/share/hpcissh/oidc-agent_hpci-main.conf /etc/oidc-agent/issuer.config.d/hpci-main
-sudo ln -sf ${PREFIX}/share/hpcissh/oidc-agent_hpci-sub.conf  /etc/oidc-agent/issuer.config.d/hpci-sub
-```
-
-#### Per-user:
-
-```bash
-PREFIX=~/.local  # Adjust if a different prefix was used
-mkdir -p ~/.config/oidc-agent/issuer.config.d/
-ln -sf ${PREFIX}/share/hpcissh/oidc-agent_hpci-main.conf ~/.config/oidc-agent/issuer.config.d/hpci-main
-ln -sf ${PREFIX}/share/hpcissh/oidc-agent_hpci-sub.conf  ~/.config/oidc-agent/issuer.config.d/hpci-sub
-```
-
-#### macOS (Homebrew):
-
-```bash
-# Ensure oidc-agent is installed
-HOMEBREW_PREFIX=$(brew --prefix)
-ln -sf ${HOMEBREW_PREFIX}/opt/hpcissh/share/hpcissh/oidc-agent_hpci-main.conf ${HOMEBREW_PREFIX}/etc/oidc-agent/issuer.config.d/hpci-main
-ln -sf ${HOMEBREW_PREFIX}/opt/hpcissh/share/hpcissh/oidc-agent_hpci-sub.conf  ${HOMEBREW_PREFIX}/etc/oidc-agent/issuer.config.d/hpci-sub
-```
-
-### Configuring Issuer Profiles for oidc-agent version 4
-
-#### System-wide:
-
-```bash
-PREFIX=/usr/local  # Adjust if a different prefix was used
-cat ${PREFIX}/share/hpcissh/oidc-agent-v4_hpci-pubclients.config | sudo tee -a /etc/oidc-agent/pubclients.config
-```
-
-#### Per-user:
-
-```bash
-PREFIX=~/.local  # Adjust if a different prefix was used
-cat ${PREFIX}/share/hpcissh/oidc-agent-v4_hpci-pubclients.config >> ~/.config/oidc-agent/pubclients.config
-```
+- For oidc-agent version 4
+  - `~/.config/oidc-agent/pubclients.config`
+- For oidc-agent version 5
+  - `~/.config/oidc-agent/issuer.config.d/hpci-main`
+  - `~/.config/oidc-agent/issuer.config.d/hpci-sub`
 
 ## Usage
 
@@ -145,7 +117,7 @@ Choose between `jwt-agent` and `oidc-agent`.
 | **Access token lifetime** | 600 sec. | 600 sec. |
 | **Agent Forwarding** | No | Yes |
 
-#### Using jwt-agent
+#### Step 1-1: Using jwt-agent
 
 1.  Ensure `USE_JWT_AGENT=yes` (default) in `~/.hpcissh`.
 2.  Log in to the HPCI JWT server: <https://elpis.hpci.nii.ac.jp> (or sub-system: <https://elpis-c.hpci.nii.ac.jp>).
@@ -154,17 +126,17 @@ Choose between `jwt-agent` and `oidc-agent`.
 
 To stop the agent: `jwt-agent --stop`
 
-#### Using oidc-agent
+#### Step 1-2: Using oidc-agent
 
 1.  Set `USE_JWT_AGENT=no` in `~/.hpcissh`.
-2.  Set `OIDC_AGENT_OPTS=--no-autoreauthenticate` in `~/.config/oidc-agent/oidc-agent-service.options`.
-3.  Initialize the agent: `eval $(oidc-agent-service use)`
-4.  Configure the HPCI account: `oidc-sshconf-hpci`
-    - Follow the prompts to authenticate via your browser.
+2.  (Optional) To use sub-system: Set `OIDC_ISSUER="https://metis-c.hpci.nii.ac.jp/auth/realms/HPCI"` in `~/.hpcissh`.
+3.  Initialize the agent: `eval $(hpci-oidc-agent-service use)`
+4.  Generates HPCI account configurations for oidc-agent: `oidc-sshconf-hpci`
+    - Follow the prompts to log in to the HPCI OpenID provider via your web browser.
 
-To use the agent in another terminal: `eval $(oidc-agent-service use)`
+To use the oidc-agent in another terminal: `eval $(oidc-agent-service use)`
 
-To stop the agent: `eval $(oidc-agent-service stop)`
+To stop the oidc-agent: `eval $(oidc-agent-service stop)`
 
 ### Step 2: Connect via hpcissh
 
@@ -184,6 +156,7 @@ hpcissh REMOTE_USER@<HOSTNAME> [command,args]...
 - `hpcissh-version`: Show version info
 - `hpci-get-userinfo`: Retrieve OIDC user information
 - `hpci-parse-token`: Parse and display JWT claims
+- `hpci-token`: Display JWT
 
 ## Configurable Parameters
 
@@ -216,7 +189,7 @@ The following items can be configured:
   - The OpenID Connect issuer URL.
   - Type: string, Default: (See `script/hpcissh-lib`)
 - **`OIDC_AGENT_USE_PW_ENV`**
-  - Suppress the `oidc-prompt` (GUI popup) by using environment variables for passwords.
+  - Use `--pw-env` for `oidc-gen` and `oidc-add` to suppress **`oidc-prompt`** command (GUI popup).
   - Type: yes/no, Default: `yes`
 - **`OIDC_USERINFO_ENDPOINT_PATH`**
   - The path to the userinfo endpoint.
