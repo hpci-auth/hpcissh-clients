@@ -43,6 +43,8 @@ OAuth-based SSH client toolset for HPCI.
 
 ### Manual Installation
 
+**Prerequisites**: Please ensure all [Dependencies](#dependencies) (e.g., `sshpass`, `jwt-agent`, etc.) are installed on your system before proceeding. Detailed installation instructions for each dependency are omitted here.
+
 #### System-wide Installation (Requires root/sudo privileges)
 
 ```bash
@@ -62,7 +64,14 @@ make prefix=~/.local
 make install prefix=~/.local
 ```
 
-Ensure `~/.local/bin` is in your `PATH`:
+Ensure `~/.local/bin` is in your `PATH`. We recommend adding the following line to your `~/.bashrc` (for Bash) or `~/.zshrc` (for Zsh):
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+To apply this change immediately in your current terminal session, run:
+
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
 ```
