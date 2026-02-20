@@ -42,6 +42,11 @@ OAuth-based SSH client toolset for HPCI.
 3. **(Optional) Install oidc-agent**:
     - <https://indigo-dc.gitbook.io/oidc-agent/intro/macos>
 
+    ```bash
+    brew tap indigo-dc/oidc-agent
+    brew install oidc-agent
+    ```
+
 #### Upgrading or Uninstalling (Homebrew)
 
 ```bash
