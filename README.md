@@ -58,6 +58,9 @@ brew upgrade hpcissh
 
 # To uninstall
 brew uninstall hpcissh
+brew untap hpci-auth/tap
+brew uninstall oidc-agent
+brew untap indigo-dc/oidc-agent
 ```
 
 ### Manual Installation
