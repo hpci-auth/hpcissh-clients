@@ -47,6 +47,8 @@ OAuth-based SSH client toolset for HPCI.
     brew install oidc-agent
     ```
 
+![demo-macos](./vhs/macos.gif)
+
 #### Upgrading or Uninstalling (Homebrew)
 
 ```bash
