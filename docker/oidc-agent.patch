@@ -1,0 +1,13 @@
+--- src/oidc-prompt/webview.h
++++ src/oidc-prompt/webview.h
+@@ -560,2 +560,8 @@
+-    webkit_web_view_run_javascript(WEBKIT_WEB_VIEW(m_webview), js.c_str(), NULL,
+-                                   NULL, NULL);
++    webkit_web_view_evaluate_javascript(WEBKIT_WEB_VIEW(m_webview),
++                                        js.c_str(),
++                                        -1,
++                                        NULL,
++                                        NULL,
++                                        NULL,
++                                        NULL,
++                                        NULL);

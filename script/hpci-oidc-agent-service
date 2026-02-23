@@ -32,9 +32,8 @@ if [ -n "${OIDC_CONFIG_DIR:-}" ]; then
     fi
     MY_OIDC_CONFIG_DIR=${OIDC_CONFIG_DIR}
 else
-    if [ -d "${HOME}/.config" ]; then
-        MY_OIDC_CONFIG_DIR="${HOME}/.config/oidc-agent"
-    else
+    MY_OIDC_CONFIG_DIR="${HOME}/.config/oidc-agent"
+    if [ ! -d "$MY_OIDC_CONFIG_DIR" ] && [ -d "${HOME}/.oidc-agent" ]; then
         MY_OIDC_CONFIG_DIR="${HOME}/.oidc-agent"
     fi
 fi

@@ -1,9 +1,11 @@
 # Release note for hpcissh-clients
 
-## version 1.12 (2026-02-??)
+## version 1.12.0 (2026-02-??)
 
-- Update feature
+- New feature
+  - container image for Podman
   - support macOS platform using Homebrew
+- Update feature
   - automatically use HPCI SSH CA (no need to edit the known_hosts file anymore)
   - By using hpci-oidc-agent-service, HPCI configurations for oidc-agent is added automatically
   - suppress oidc-prompt (GUI popup) for oidc-agent
@@ -14,8 +16,8 @@
   - hpcissh-append-ssh-ca
 - New configuration directive
   - OIDC_AGENT_USE_PW_ENV (default: yes)
-  - HPCISSH_AUTO_LOGIN_NAME (default: yes)
   - HPCISSH_AUTO_KNWON_HOSTS (default: yes)
+  - HPCISSH_AUTO_LOGIN_NAME (default: yes)
 
 ## version 1.11 (2024-10-30)
 

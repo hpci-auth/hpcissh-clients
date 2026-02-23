@@ -8,26 +8,77 @@ OAuth-based SSH client toolset for HPCI.
 - `curl`
 - `sshpass`
 - `bash` (version 5 or later)
+- `procps-ng` (procps)
 - `jwt-agent`
 - `oidc-agent` (optional)
 
 ## Installation
 
-### Podman
+### Podman (or Docker)
 
 (Detailed instructions coming soon.)
 
-### Ubuntu 24.04 (including WSL2)
+#### WSL2 (Windows 11) + Podman
 
 (Detailed instructions coming soon.)
 
-- **Note**: `oidc-agent` is version 4 on this platform.
-
-### RHEL-based distributions (AlmaLinux, Rocky Linux, etc.)
+#### Ubuntu + podman
 
 (Detailed instructions coming soon.)
 
-### macOS (via Homebrew)
+#### RHEL-based distributions (AlmaLinux, Rocky Linux, etc.) + Podman
+
+(Detailed instructions coming soon.)
+
+#### macOS + Podman
+
+1. **Install Homebrew**: <https://brew.sh/>
+2. **Install podman**:
+
+    ```bash
+    brew install podman
+    ```
+
+3. Run `podman machine start`
+4. Refer to "Common Procedures for Podamn"
+
+#### Common Procedures for Podman
+
+1. Run `podman run ...`
+
+    ```bash
+    # Example:
+    podman run --rm -it --init --hostname hpcissh --name hpcissh \
+    --mount type=bind,src=${HOME},dst=/HOST_HOMEDIR \
+    -e USER_UID=$(id -u) \
+    -e USER_GID=$(id -g) \
+    -e USER_NAME=$(id -un) \
+    ghcr.io/hpci-auth/hpcissh-almalinux10:latest
+    ```
+
+2. Refer to "How to use hpcissh"
+3. Once you are finished with the hpcissh command, type `exit` to quit.
+    - The container and its files are automatically removed after it stops.
+
+#### How to use Docker instead of Podman
+
+If you are using Docker,
+please use the `docker` command instead of `podman` in the steps above.
+
+#### How to build the container image
+
+```bash
+cd docker
+podman build -f Dockerfile-almalinux -t hpcissh-almalinux10:localdev \
+  --build-arg ALMA_VERSION=10 \
+  --build-arg OIDC_AGENT_VERSION=4.5.2 \
+  --build-arg JWT_AGENT_VERSION=1.1.1 \
+  ../
+
+podman run <Options are omitted; refer to the options above> hpcissh-almalinux10:localdev
+```
+
+### macOS (using Homebrew)
 
 `hpcissh` can be installed directly using Homebrew.
 
@@ -63,6 +114,8 @@ brew uninstall oidc-agent
 brew untap indigo-dc/oidc-agent
 ```
 
+Refer to "How to use hpcissh"
+
 ### Manual Installation
 
 **Prerequisites**: Please ensure all [Dependencies](#dependencies)
@@ -77,7 +130,9 @@ make
 sudo make install
 ```
 
-#### Upgrading or Uninstalling (System-wide)
+Refer to "How to use hpcissh"
+
+Upgrading or Uninstalling (System-wide):
 
 ```bash
 # To upgrade (after updating the source code)
@@ -95,7 +150,9 @@ make prefix=~/.local
 make install prefix=~/.local
 ```
 
-#### Upgrading or Uninstalling (User-local)
+Refer to "How to use hpcissh"
+
+Upgrading or Uninstalling (User-local):
 
 ```bash
 # To upgrade (after updating the source code)
@@ -156,7 +213,7 @@ The following files are managed automatically by the `oidc-sshconf-hpci` command
 
 ---
 
-## Usage
+## How to use hpcissh
 
 ### Step 1: Obtain an Access Token
 
@@ -192,7 +249,7 @@ To stop the agent: `jwt-agent --stop`
 To use `oidc-agent` in another terminal: `eval $(oidc-agent-service use)`
 To stop the agent: `eval $(oidc-agent-service stop)`
 
-### Step 2: Connect via hpcissh
+### Step 2: Connect a HPCI SSH server via hpcissh
 
 ```bash
 # Automatically resolve and append the remote login name

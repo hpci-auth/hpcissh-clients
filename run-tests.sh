@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -Eu
+set -eEu
 
 usage() {
     local exit_code="${1:-1}"  # 1: error
