@@ -40,7 +40,7 @@ OAuth-based SSH client toolset for HPCI.
     ```
 
 3. Run `podman machine start`
-4. Refer to "Common Procedures for Podamn"
+4. Refer to "Common Procedures for Podman"
 
 #### Common Procedures for Podman
 
@@ -56,8 +56,8 @@ OAuth-based SSH client toolset for HPCI.
     ghcr.io/hpci-auth/hpcissh-almalinux10:latest
     ```
 
-2. Refer to "How to use hpcissh"
-3. Once you are finished with the hpcissh command, type `exit` to quit.
+2. To use hpcissh, refer to "How to use hpcissh".
+3. To finish using the hpcissh and related command, type `exit` to quit the container.
     - The container and its files are automatically removed after it stops.
 
 #### How to use Docker instead of Podman
@@ -114,9 +114,9 @@ brew uninstall oidc-agent
 brew untap indigo-dc/oidc-agent
 ```
 
-Refer to "How to use hpcissh"
+To use hpcissh, refer to "How to use hpcissh".
 
-### Manual Installation
+### Manual Installation (Advanced)
 
 **Prerequisites**: Please ensure all [Dependencies](#dependencies)
 (e.g., `jwt-agent`, `sshpass`, etc.) are installed on your system before
@@ -130,7 +130,7 @@ make
 sudo make install
 ```
 
-Refer to "How to use hpcissh"
+To use hpcissh, refer to "How to use hpcissh".
 
 Upgrading or Uninstalling (System-wide):
 
@@ -150,7 +150,7 @@ make prefix=~/.local
 make install prefix=~/.local
 ```
 
-Refer to "How to use hpcissh"
+To use hpcissh, refer to "How to use hpcissh".
 
 Upgrading or Uninstalling (User-local):
 
@@ -177,39 +177,6 @@ export PATH="$HOME/.local/bin:$PATH"
 ```
 
 - **Note**: For overridable parameters, see `config.mk`.
-
----
-
-## Configuration
-
-### Installing the HPCI SSH CA (Public Key)
-
-By default, this procedure is **not required** because `hpcissh` automatically
-uses the HPCI SSH CA via the `KnownHostsCommand` SSH option (controlled by the
-`HPCISSH_AUTO_KNOWN_HOSTS` parameter).
-
-However, if you set `HPCISSH_AUTO_KNOWN_HOSTS=no` or wish to perform a manual
-installation, execute the following:
-
-Update the system-wide `/etc/ssh/ssh_known_hosts` (requires root privileges):
-
-```bash
-sudo hpcissh-append-ssh-ca --system --update
-```
-
-Update the `~/.ssh/known_hosts` for the current user:
-
-```bash
-hpcissh-append-ssh-ca --user --update
-```
-
-### Configuring Issuer Profiles for oidc-agent
-
-The following files are managed automatically by the `oidc-sshconf-hpci` command.
-
-- **For oidc-agent v4**: `~/.config/oidc-agent/pubclients.config`
-- **For oidc-agent v5**: `~/.config/oidc-agent/issuer.config.d/hpci-main`
-  and `hpci-sub`
 
 ---
 
@@ -249,7 +216,7 @@ To stop the agent: `jwt-agent --stop`
 To use `oidc-agent` in another terminal: `eval $(oidc-agent-service use)`
 To stop the agent: `eval $(oidc-agent-service stop)`
 
-### Step 2: Connect a HPCI SSH server via hpcissh
+### Step 2: Connect to a HPCI SSH server via hpcissh
 
 ```bash
 # Automatically resolve and append the remote login name
@@ -317,6 +284,39 @@ The following items can be configured:
   - Automatically use remote login name. (yes/no, default: `yes`)
 - **`HPCISSH_AUTO_KNOWN_HOSTS`**
   - Automatically use HPCI SSH CA. (yes/no, default: `yes`)
+
+---
+
+## Configuration files
+
+### Public key of HPCI SSH CA
+
+By default, this procedure is **not required** because `hpcissh` automatically
+uses the HPCI SSH CA via the `KnownHostsCommand` SSH option (controlled by the
+`HPCISSH_AUTO_KNOWN_HOSTS` parameter).
+
+However, if you set `HPCISSH_AUTO_KNOWN_HOSTS=no` or wish to perform a manual
+installation, execute the following:
+
+Update the system-wide `/etc/ssh/ssh_known_hosts` (requires root privileges):
+
+```bash
+sudo hpcissh-append-ssh-ca --system --update
+```
+
+Update the `~/.ssh/known_hosts` for the current user:
+
+```bash
+hpcissh-append-ssh-ca --user --update
+```
+
+### Configuring Issuer Profiles for oidc-agent
+
+The following files are managed automatically by the `oidc-sshconf-hpci` command.
+
+- **For oidc-agent v4**: `~/.config/oidc-agent/pubclients.config`
+- **For oidc-agent v5**: `~/.config/oidc-agent/issuer.config.d/hpci-main`
+  and `hpci-sub`
 
 ---
 
