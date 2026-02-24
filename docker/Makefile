@@ -28,7 +28,9 @@ CONTAINER_SHELL = /bin/bash
 LANG = ja_JP.UTF-8
 TZ = Asia/Tokyo
 
-RUN_OPTS = -it
+DOCKER_INTERACTIVE := $(shell test -t 0 && echo "-it" || echo "-i")
+
+RUN_OPTS = $(DOCKER_INTERACTIVE)
 ifeq ($(DOCKER_CMD_NAME),podman)
   RUN_OPTS += --init
   RUN_OPTS += --hostname $(NAME)
