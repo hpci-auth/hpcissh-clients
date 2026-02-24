@@ -91,9 +91,9 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Test image
+        working-directory: ./docker
         run: |
           make test DOCKER_CMD=docker IMAGE_NAME_FULL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
-        working-directory: ./docker
 
       - name: Export digest
         if: steps.check_branch.outputs.IS_TARGET == 'true'
