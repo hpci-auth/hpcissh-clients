@@ -1,11 +1,22 @@
-DOCKER_CMD = podman
-DOCKER_FILE = Dockerfile-almalinux
-ALMA_VERSION = 10
-OIDC_AGENT_VERSION = 4.5.2
+# SEE ALSO: Dockerfile-almalinux
+ALMA_VERSION =
+OIDC_AGENT_VERSION =
+JWT_AGENT_VERSION =
+#ALMA_VERSION = 10
+#OIDC_AGENT_VERSION = 4.5.2
 #OIDC_AGENT_VERSION = 5.3.4
-JWT_AGENT_VERSION = 1.1.1
-TAG = localdev
+#JWT_AGENT_VERSION = 1.1.1
+
+DOCKER_CMD = podman
+DOCKER_CMD_NAME := $(shell basename $(DOCKER_CMD))
+
+DOCKER_FILE = Dockerfile-almalinux
+
 NAME = hpcissh
+IMAGE_TAG = localdev
+IMAGE_NAME = $(NAME)-almalinux$(ALMA_VERSION)
+IMAGE_NAME_FULL = $(IMAGE_NAME):$(IMAGE_TAG)
+
 USER_UID := $(shell id -u)
 USER_GID := $(shell id -g)
 USER_NAME := $(shell id -un)
@@ -13,8 +24,7 @@ USER_HOST_HOME = $(HOME)
 MOUNT_HOST_HOME=/HOST_HOMEDIR
 CONTAINER_HOME = /home/$(USER_NAME)
 CONTAINER_SHELL = /bin/bash
-DOCKER_CMD_NAME := $(shell basename $(DOCKER_CMD))
-IMAGE_NAME = $(NAME)-almalinux$(ALMA_VERSION)
+
 LANG = ja_JP.UTF-8
 TZ = Asia/Tokyo
 
@@ -28,13 +38,21 @@ ifeq ($(DOCKER_CMD_NAME),docker)
   RUN_OPTS += --hostname $(NAME)
 endif
 
+BUILD_OPTS =
+ifneq ($(ALMA_VERSION),)
+  BUILD_OPTS += --build-arg ALMA_VERSION=$(ALMA_VERSION)
+endif
+ifneq ($(OIDC_AGENT_VERSION),)
+  BUILD_OPTS += --build-arg OIDC_AGENT_VERSION=$(OIDC_AGENT_VERSION)
+endif
+ifneq ($(JWT_AGENT_VERSION),)
+  BUILD_OPTS += --build-arg JWT_AGENT_VERSION=$(JWT_AGENT_VERSION)
+endif
+
 .PHONY: build
 build:
-	$(DOCKER_CMD) build -f $(DOCKER_FILE) -t $(IMAGE_NAME):$(TAG) \
-	--build-arg ALMA_VERSION=$(ALMA_VERSION) \
-	--build-arg OIDC_AGENT_VERSION=$(OIDC_AGENT_VERSION) \
-	--build-arg JWT_AGENT_VERSION=$(JWT_AGENT_VERSION) \
-	../
+	$(DOCKER_CMD) build -f $(DOCKER_FILE) -t $(IMAGE_NAME_FULL) \
+	$(BUILD_OPTS) ../
 
 define docker_run
 	$(DOCKER_CMD) run $(1) $(RUN_OPTS) \
@@ -48,7 +66,7 @@ define docker_run
 	-e CONTAINER_SHELL=$(CONTAINER_SHELL) \
 	-e LANG=$(LANG) \
 	-e TZ=$(TZ) \
-	$(IMAGE_NAME):$(TAG) $(2)
+	$(IMAGE_NAME_FULL) $(2)
 endef
 
 .PHONY: run-shell
