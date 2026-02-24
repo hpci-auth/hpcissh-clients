@@ -20,6 +20,11 @@ The following tools are required for the scripts to function:
 
 The easiest way to get started without manually installing all dependencies.
 
+**Note**: Podman operates without requiring root privileges
+(rootless). In contrast, Docker typically runs with elevated
+privileges. Please ensure you fully understand the security
+implications of these permissions before using Docker.
+
 #### OS-specific Podman Setup
 
 - **WSL2 (Windows 11)**:
@@ -28,17 +33,17 @@ The easiest way to get started without manually installing all dependencies.
     - Run `sudo apt-get -y install podman`.
   - Option B: Download Podman Installer (Podman CLI for Windows) from <https://podman.io/>
     - Install it
-    - (Powershell) Run `podman machine init` and `podman machine start`
+    - (In Powershell) Run `podman machine init` and `podman machine start`
 - **macOS**:
   - There are two ways to install Podman.
-  - Option A: via Homebrew
+  - Option A: Install Podman via Homebrew
     1. Install Homebrew: <https://brew.sh/>
     2. Run `brew install podman`
     3. Run `podman machine init && podman machine start`
   - Option B: Download Podman Installer (Podman CLI for macOS) from <https://podman.io/>
     - Install it
     - (macOS Terminal) Run `podman machine init && podman machine start`
-- **Linux Distributions**: Install via the package manager
+- **Linux Distributions**: Install Podman via the package manager
   - (Debian / Ubuntu) Run `sudo apt-get -y install podman`
   - (RHEL / AlmaLinux / Rocky Linux / etc.) Run `sudo dnf -y install podman`
 
@@ -58,7 +63,9 @@ For more details, refer to <https://podman.io/docs/installation>.
       -e USER_GID=$(id -g) \
       -e USER_NAME=$(id -un) \
       ghcr.io/hpci-auth/hpcissh-almalinux10:latest
+    ```
 
+    ```bash
     # If using Docker:
     docker run \
       --rm -it --init --hostname hpcissh --name hpcissh \
@@ -69,10 +76,33 @@ For more details, refer to <https://podman.io/docs/installation>.
       ghcr.io/hpci-auth/hpcissh-almalinux10:latest
     ```
 
-2. Follow the steps in [How to use hpcissh](#how-to-use-hpcissh) inside the container.
-3. Type `exit` to quit. The container and its files are automatically removed.
+    ```powershell
+    # If using Podman in Windows Powershell:
+    PS C:\Users\USERNAME> podman run --userns=keep-id `
+        --rm -it --init --hostname hpcissh --name hpcissh `
+        --mount type=bind,src=${HOME},dst=/HOST_HOMEDIR `
+        -e USER_UID=1000 `
+        -e USER_GID=1000 `
+        -e USER_NAME=USERNAME `
+        ghcr.io/hpci-auth/hpcissh-almalinux10:latest
+    ```
 
-#### Building the Image Locally
+2. Follow the steps in [How to use hpcissh](#how-to-use-hpcissh) inside the container.
+3. Type `exit` to quit. The container is automatically removed.
+    - **Warning**: Any files stored strictly within the container are volatile and will be deleted automatically.
+      Always copy important data to `~/HOST_HOMEDIR/` for permanent storage.
+
+#### Updating the Container image before starting the container
+
+```bash
+# Using Podman
+podman pull ghcr.io/hpci-auth/hpcissh-almalinux10:latest
+
+# Using Docker
+docker pull ghcr.io/hpci-auth/hpcissh-almalinux10:latest
+```
+
+#### Building the Container image Locally
 
 ```bash
 cd docker
