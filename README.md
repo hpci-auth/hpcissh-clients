@@ -4,68 +4,67 @@ OAuth-based SSH client toolset for HPCI.
 
 ## Dependencies
 
-- `jq`
-- `curl`
-- `sshpass`
-- `bash` (version 5 or later)
-- `procps-ng` (procps)
-- `jwt-agent`
-- `oidc-agent` (optional)
+The following tools are required for the scripts to function:
+
+- `jq`: JSON processor.
+- `curl`: Tool for transferring data with URLs.
+- `sshpass`: Non-interactive SSH password provider.
+- `bash`: Version 5 or later.
+- `procps-ng` (procps): For process management (e.g., `ps`).
+- `jwt-agent`: For managing JWT tokens.
+- `oidc-agent` (optional): For managing JWT tokens and agent forwarding.
 
 ## Installation
 
-### Podman (or Docker)
+### 1. Using Container for Podman (or Docker)
 
-(Detailed instructions coming soon.)
+The easiest way to get started without manually installing all dependencies.
 
-#### WSL2 (Windows 11) + Podman
+#### OS-specific Podman Setup
 
-(Detailed instructions coming soon.)
+- **WSL2 (Windows 11)**:
+  - There are two ways to install Podman.
+  - Option A: Install Podman within Ubuntu on WSL2
+    - Run `sudo apt-get -y install podman`.
+  - Option B: Download Podman Installer (Podman CLI for Windows) from <https://podman.io/>
+    - Install it
+    - (Powershell) Run `podman machine init` and `podman machine start`
+- **macOS**:
+  - There are two ways to install Podman.
+  - Option A: via Homebrew
+    1. Install Homebrew: <https://brew.sh/>
+    2. Run `brew install podman`
+    3. Run `podman machine init && podman machine start`
+  - Option B: Download Podman Installer (Podman CLI for macOS) from <https://podman.io/>
+    - Install it
+    - (macOS Terminal) Run `podman machine init && podman machine start`
+- **Linux Distributions**: Install via the package manager
+  - (Debian / Ubuntu) Run `sudo apt-get -y install podman`
+  - (RHEL / AlmaLinux / Rocky Linux / etc.) Run `sudo dnf -y install podman`
 
-#### Ubuntu + podman
+For more details, refer to <https://podman.io/docs/installation>.
 
-(Detailed instructions coming soon.)
+#### Common Procedures for Podman (or Docker)
 
-#### RHEL-based distributions (AlmaLinux, Rocky Linux, etc.) + Podman
-
-(Detailed instructions coming soon.)
-
-#### macOS + Podman
-
-1. **Install Homebrew**: <https://brew.sh/>
-2. **Install podman**:
+1. **Start the Container**:
+   Run the following command (it mounts your host's `$HOME` to `/HOST_HOMEDIR`):
 
     ```bash
-    brew install podman
-    ```
-
-3. Run `podman machine start`
-4. Refer to "Common Procedures for Podman"
-
-#### Common Procedures for Podman
-
-1. Run `podman run ...`
-
-    ```bash
-    # Example:
+    # Using Podman (recommended):
     podman run --rm -it --init --hostname hpcissh --name hpcissh \
-    --mount type=bind,src=${HOME},dst=/HOST_HOMEDIR \
-    -e USER_UID=$(id -u) \
-    -e USER_GID=$(id -g) \
-    -e USER_NAME=$(id -un) \
-    ghcr.io/hpci-auth/hpcissh-almalinux10:latest
+      --mount type=bind,src=${HOME},dst=/HOST_HOMEDIR \
+      -e USER_UID=$(id -u) \
+      -e USER_GID=$(id -g) \
+      -e USER_NAME=$(id -un) \
+      ghcr.io/hpci-auth/hpcissh-almalinux10:latest
+
+    # If using Docker, simply replace 'podman' with 'docker'.
     ```
 
-2. To use hpcissh, refer to "How to use hpcissh".
-3. To finish using the hpcissh and related command, type `exit` to quit the container.
-    - The container and its files are automatically removed after it stops.
+2. Follow the steps in [How to use hpcissh](#how-to-use-hpcissh) inside the container.
+3. Type `exit` to quit. The container and its files are automatically removed.
 
-#### How to use Docker instead of Podman
-
-If you are using Docker,
-please use the `docker` command instead of `podman` in the steps above.
-
-#### How to build the container image
+#### Building the Image Locally
 
 ```bash
 cd docker
@@ -74,16 +73,14 @@ podman build -f Dockerfile-almalinux -t hpcissh-almalinux10:localdev \
   --build-arg OIDC_AGENT_VERSION=4.5.2 \
   --build-arg JWT_AGENT_VERSION=1.1.1 \
   ../
-
-podman run <Options are omitted; refer to the options above> hpcissh-almalinux10:localdev
 ```
 
-### macOS (using Homebrew)
+---
 
-`hpcissh` can be installed directly using Homebrew.
+### 2. macOS (Native via Homebrew)
 
 1. **Install Homebrew**: <https://brew.sh/>
-2. **Install hpcissh** (jwt-agent is also installed):
+2. **Install hpcissh**:
 
     ```bash
     brew tap hpci-auth/tap
@@ -91,7 +88,7 @@ podman run <Options are omitted; refer to the options above> hpcissh-almalinux10
     ```
 
 3. **(Optional) Install oidc-agent**:
-    - <https://indigo-dc.gitbook.io/oidc-agent/intro/macos>
+    - Refer to: <https://indigo-dc.gitbook.io/oidc-agent/intro/macos>
 
     ```bash
     brew tap indigo-dc/oidc-agent
@@ -100,83 +97,73 @@ podman run <Options are omitted; refer to the options above> hpcissh-almalinux10
 
 ![demo-macos](./vhs/macos.gif)
 
-#### Upgrading or Uninstalling (Homebrew)
+#### Upgrading or Uninstalling
 
 ```bash
 # To upgrade
-brew update
-brew upgrade hpcissh
+brew update && brew upgrade hpcissh
 
 # To uninstall
-brew uninstall hpcissh
-brew untap hpci-auth/tap
-brew uninstall oidc-agent
-brew untap indigo-dc/oidc-agent
+brew uninstall hpcissh && brew untap hpci-auth/tap
+brew uninstall oidc-agent && brew untap indigo-dc/oidc-agent
 ```
 
-To use hpcissh, refer to "How to use hpcissh".
+---
 
-### Manual Installation (Advanced)
+### 3. Manual Installation
 
-**Prerequisites**: Please ensure all [Dependencies](#dependencies)
-(e.g., `jwt-agent`, `sshpass`, etc.) are installed on your system before
-proceeding. Detailed installation instructions for each dependency are omitted
-here.
+**Prerequisites**: Ensure all [Dependencies](#dependencies) are installed.
 
-#### System-wide Installation (Requires root/sudo privileges)
+#### System-wide Installation (Requires sudo)
 
 ```bash
 make
 sudo make install
 ```
 
-To use hpcissh, refer to "How to use hpcissh".
-
-Upgrading or Uninstalling (System-wide):
+#### User-local Installation (e.g., to `~/.local`)
 
 ```bash
-# To upgrade (after updating the source code)
-make
-sudo make install
-
-# To uninstall
-sudo make uninstall
+make build install prefix=$HOME/.local
 ```
 
-#### User-local Installation (Installs to `~/.local`)
+For macOS
 
 ```bash
-make prefix=~/.local
-make install prefix=~/.local
+make build install prefix=$HOME/.local bash_path=$(brew --prefix)/bin/bash
 ```
 
-To use hpcissh, refer to "How to use hpcissh".
-
-Upgrading or Uninstalling (User-local):
-
-```bash
-# To upgrade (after updating the source code)
-make prefix=~/.local
-make install prefix=~/.local
-
-# To uninstall
-make uninstall prefix=~/.local
-```
-
-Ensure `~/.local/bin` is in your `PATH`. We recommend adding the following line
-to your `~/.bashrc` (for Bash) or `~/.zshrc` (for Zsh):
+**Apply PATH changes**: Add this to your `~/.bashrc` or `~/.zshrc`:
 
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-To apply this change immediately in your current terminal session, run:
+To apply immediately, run `export PATH="$HOME/.local/bin:$PATH"`
+
+---
+
+## Configuration
+
+### SSH CA (Public Key) for HPCI
+
+`hpcissh` command automatically uses the public key of the SSH CA for HPCI to verify SSH servers. Manual setup is **NOT required** unless `HPCISSH_AUTO_KNOWN_HOSTS=no` is set.
+
+To manually update:
 
 ```bash
-export PATH="$HOME/.local/bin:$PATH"
+# System-wide
+sudo hpcissh-append-ssh-ca --system --update
+# User-specific
+hpcissh-append-ssh-ca --user --update
 ```
 
-- **Note**: For overridable parameters, see `config.mk`.
+### Issuer Profiles for oidc-agent
+
+The following files are managed automatically by `oidc-sshconf-hpci`:
+
+- **For oidc-agent v4**: `~/.config/oidc-agent/pubclients.config`
+- **For oidc-agent v5**: `~/.config/oidc-agent/issuer.config.d/hpci-main` and `hpci-sub`
 
 ---
 
@@ -184,167 +171,105 @@ export PATH="$HOME/.local/bin:$PATH"
 
 ### Step 1: Obtain an Access Token
 
-Choose between `jwt-agent` and `oidc-agent`.
+Choose the agent that fits your workflow. **`jwt-agent` is recommended for most users.**
 
-| Feature / HPCI Parameter | `jwt-agent` | `oidc-agent` |
+| Feature / Parameter | `jwt-agent` (Default) | `oidc-agent` |
 | :--- | :--- | :--- |
 | **Max Idle Period** | 1 week | 1 week |
 | **Max Lifetime** | 1 year | 1 week |
 | **Access Token Lifetime** | 600 sec. | 600 sec. |
 | **Agent Forwarding** | No | Yes |
+| **For hpcissh login** | Yes | Yes |
+| **For HPCI Shared Storage** | Yes | Yes |
 
-#### Step 1-1: Using jwt-agent
+#### Option A: Using `jwt-agent`
 
-1. Ensure `USE_JWT_AGENT=yes` (default) in `~/.hpcissh`.
-2. Log in to the HPCI JWT server: <https://elpis.hpci.nii.ac.jp>
-   (or <https://elpis-c.hpci.nii.ac.jp>).
-3. Generate a JWT and obtain the passphrase.
-4. Run `jwt-agent` in your terminal and enter the passphrase.
+1. Log in to the HPCI JWT server: [elpis (main-system)](https://elpis.hpci.nii.ac.jp) or [elpis-c (sub-system)](https://elpis-c.hpci.nii.ac.jp).
+2. Generate a JWT and copy the provided **passphrase**.
+3. Run `jwt-agent` and enter the **passphrase**.
+4. (Refer to "**Connect to a SSH Server**")
+5. (To stop): `jwt-agent --stop`
 
-To stop the agent: `jwt-agent --stop`
-
-#### Step 1-2: Using oidc-agent
+#### Option B: Using `oidc-agent`
 
 1. Set `USE_JWT_AGENT=no` in `~/.hpcissh`.
-2. (Optional) To use the sub-system: Set
-   `OIDC_ISSUER="https://metis-c.hpci.nii.ac.jp/auth/realms/HPCI"` in
-   `~/.hpcissh`.
-3. Initialize the agent: `eval $(oidc-agent-service use)`
-4. Generate HPCI account configurations: `oidc-sshconf-hpci`
-    - Follow the prompts to authenticate via your browser.
+2. (Optional) To use sub-system: Set `OIDC_ISSUER="https://metis-c.hpci.nii.ac.jp/auth/realms/HPCI"` in `~/.hpcissh`.
+3. Starting agent: Run `eval $(oidc-agent-service use)`
+4. Run `oidc-sshconf-hpci` and follow browser prompts.
+    - Enter encryption password
+    - Open URL in Web browser
+    - Enter the code displayed on your terminal
+    - Select your shibboleth IdP
+    - Login your shibboleth IdP
+    - Enter the One-time code
+5. (Refer to "**Connect to a SSH Server**")
+6. (To stop): `eval $(oidc-agent-service stop)`
 
-To use `oidc-agent` in another terminal: `eval $(oidc-agent-service use)`
-To stop the agent: `eval $(oidc-agent-service stop)`
-
-### Step 2: Connect to a HPCI SSH server via hpcissh
+### Step 2: Connect to a SSH Server
 
 ```bash
-# Automatically resolve and append the remote login name
-hpcissh <HOSTNAME> [command,args]...
+# Automatically resolve the remote login name
+hpcissh <HOSTNAME>
 
-# To specify the remote login name
-hpcissh REMOTE_USER@<HOSTNAME> [command,args]...
+# Specify a remote login name
+hpcissh REMOTE_USER@<HOSTNAME>
 ```
 
-### Other Commands
+---
 
-- `hpciscp`: Secure copy
-- `hpcisftp`: Secure file transfer (SFTP)
-- `hpcissh-config-show`: Display current configurations
+## Commands Summary
+
+- `hpciscp`: Secure copy (scp compatible)
+- `hpcisftp`: Secure FTP (sftp compatible)
+- `hpcissh-config-show`: Display current configuration
 - `hpcissh-version`: Show version info
-- `hpci-get-userinfo`: Retrieve OIDC user information
+- `hpci-token`: Display current JWT
 - `hpci-parse-token`: Parse and display JWT claims
-- `hpci-token`: Display JWT
+- `hpci-get-userinfo`: Retrieve OIDC user information
 
 ---
 
 ## Configurable Parameters
 
-Use `hpcissh-config-show` to view current settings. Customize them via
-environment variables or `~/.hpcissh`.
+Customize via environment variables or `~/.hpcissh`. Run `hpcissh-config-show` to display the current effective values.
 
-The following items can be configured:
-
-- **`USE_JWT_AGENT`**
-  - Use `jwt-agent` instead of `oidc-agent`. (yes/no, default: `yes`)
-- **`HPCISSH_DEBUG_X`**
-  - Run scripts with `set -x`. (yes/no, default: `no`)
-- **`HPCISSH_DEBUG`**
-  - Enable debug mode. (yes/no, default: `no`)
-- **`HPCISSH_QUIET`**
-  - Suppress warning messages. (yes/no, default: `no`)
-- **`OIDC_AT_LEAST_VALID_TIME`**
-  - Minimum remaining validity (in seconds) required for an access token.
-    (For `oidc-agent`)
-- **`OIDC_AGENT_OPTS`**
-  - Options for `oidc-agent`. (default: `--no-autoreauthenticate`)
-- **`OIDC_AGENT_FORWARD`**
-  - Enable forwarding of the `oidc-agent` connection.
-    (yes/no, default: `yes`)
-- **`OIDC_AGENT_CONF_NAME`**
-  - The account configuration name used for `oidc-agent`.
-    (default: `hpci`)
-- **`OIDC_ISSUER`**
-  - The OpenID Connect issuer URL. (default: See `script/hpcissh-lib`)
-- **`OIDC_AGENT_USE_PW_ENV`**
-  - Use `--pw-env` for `oidc-gen` and `oidc-add`.
-    (yes/no, default: `yes`)
-- **`OIDC_USERINFO_ENDPOINT_PATH`**
-  - Path to the userinfo endpoint. (default: See `script/hpcissh-lib`)
-- **`OIDC_USERINFO_ENDPOINT`**
-  - Full URL for the userinfo endpoint. (default: `auto`)
-- **`OIDC_USERINFO_EXPIRE`**
-  - Lifetime (in seconds) of cached user info. (default: `1800`)
-- **`HPCISSH_PORT`**
-  - Destination SSH port. (default: `2222`)
-- **`HPCISSH_TOKEN_INPUT`**
-  - Method for token input: `sshpass` or `SSH_ASKPASS`.
-    (default: `sshpass`)
-- **`HPCISSH_AUTO_LOGIN_NAME`**
-  - Automatically use remote login name. (yes/no, default: `yes`)
-- **`HPCISSH_AUTO_KNOWN_HOSTS`**
-  - Automatically use HPCI SSH CA. (yes/no, default: `yes`)
-
----
-
-## Configuration files
-
-### Public key of HPCI SSH CA
-
-By default, this procedure is **not required** because `hpcissh` automatically
-uses the HPCI SSH CA via the `KnownHostsCommand` SSH option (controlled by the
-`HPCISSH_AUTO_KNOWN_HOSTS` parameter).
-
-However, if you set `HPCISSH_AUTO_KNOWN_HOSTS=no` or wish to perform a manual
-installation, execute the following:
-
-Update the system-wide `/etc/ssh/ssh_known_hosts` (requires root privileges):
-
-```bash
-sudo hpcissh-append-ssh-ca --system --update
-```
-
-Update the `~/.ssh/known_hosts` for the current user:
-
-```bash
-hpcissh-append-ssh-ca --user --update
-```
-
-### Configuring Issuer Profiles for oidc-agent
-
-The following files are managed automatically by the `oidc-sshconf-hpci` command.
-
-- **For oidc-agent v4**: `~/.config/oidc-agent/pubclients.config`
-- **For oidc-agent v5**: `~/.config/oidc-agent/issuer.config.d/hpci-main`
-  and `hpci-sub`
+| Parameter | Description (`Default value`) |
+| :--- | :--- |
+| `USE_JWT_AGENT` | Use `jwt-agent` instead of `oidc-agent` (`yes`) |
+| `HPCISSH_DEBUG` | Enable debug mode (`no`) |
+| `HPCISSH_DEBUG_X` | Run scripts with `set -x` (`no`) |
+| `HPCISSH_QUIET` | Suppress warning messages (`no`) |
+| `HPCISSH_PORT` | Destination SSH port (`2222`) |
+| `HPCISSH_AUTO_KNOWN_HOSTS` | Automatically use HPCI SSH CA (`yes`) |
+| `HPCISSH_AUTO_LOGIN_NAME` | Automatically resolve remote login name (`yes`) |
+| `HPCISSH_TOKEN_INPUT` | Token input method: `sshpass` or `SSH_ASKPASS` (`sshpass`) |
+| `OIDC_ISSUER` | OpenID Connect issuer URL for `oidc-agent` (`https://metis.hpci.nii.ac.jp/auth/realms/HPCI`) |
+| `OIDC_AGENT_FORWARD` | Enable `oidc-agent` forwarding (`yes`) |
+| `OIDC_AGENT_OPTS` | Options for `oidc-agent` via `hpci-oidc-agent-service` (`--no-autoreauthenticate`) |
+| `OIDC_AGENT_CONF_NAME` | Account config name for `oidc-agent` (`hpci`) |
+| `OIDC_AGENT_USE_PW_ENV` | Use `--pw-env` for `oidc-gen` and `oidc-add` to suppress GUI popup for `oidc-agent` on Desktop environment (`yes`) |
+| `OIDC_AT_LEAST_VALID_TIME` | Min validity required for access token for `oidc-agent` (`180` sec.) |
+| `OIDC_USERINFO_EXPIRE` | Lifetime of cached user info (`1800` sec.) |
+| `OIDC_USERINFO_ENDPOINT` | Full URL for the userinfo endpoint. If this value is set,  OIDC_USERINFO_ENDPOINT_PATH is ignored (Default: `<empty string>`: automatically retrieved from the access token) |
+| `OIDC_USERINFO_ENDPOINT_PATH` | Path to the userinfo endpoint (`/protocol/openid-connect/userinfo`) |
 
 ---
 
 ## For Developers
 
-### Offline testing
+### Testing
+
+Offline testing:
 
 ```bash
-make all install test clean uninstall prefix=$(pwd)/LOCAL
-find ./LOCAL
-rm -rf ./LOCAL
+make build install test clean uninstall prefix=$(pwd)/LOCAL
 ```
 
-On macOS:
+Online testing (requires active agents):
 
 ```bash
-make all install test clean uninstall prefix=$(pwd)/LOCAL bash_path=$(brew --prefix)/bin/bash
-find ./LOCAL
-rm -rf ./LOCAL
-```
+# - (Run jwt-agent and oidc-agent before testing)
 
-### Online testing
-
-```bash
-# (Run jwt-agent)
-# (Run oidc-agent)
-# (Install hpcissh to $(pwd)/LOCAL)
-
-./run-tests.sh --prefix ./LOCAL ??????.ac.jp
-./run-tests.sh --prefix ./LOCAL ??????.ac.jp --run
+make build install prefix=$(pwd)/LOCAL
+./run-tests.sh --prefix $(pwd)/LOCAL <TARGET_HOSTNAME>
 ```
