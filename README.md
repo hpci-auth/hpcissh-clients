@@ -51,14 +51,22 @@ For more details, refer to <https://podman.io/docs/installation>.
 
     ```bash
     # Using Podman (recommended):
-    podman run --rm -it --init --hostname hpcissh --name hpcissh \
+    podman run --userns=keep-id \
+      --rm -it --init --hostname hpcissh --name hpcissh \
       --mount type=bind,src=${HOME},dst=/HOST_HOMEDIR \
       -e USER_UID=$(id -u) \
       -e USER_GID=$(id -g) \
       -e USER_NAME=$(id -un) \
       ghcr.io/hpci-auth/hpcissh-almalinux10:latest
 
-    # If using Docker, simply replace 'podman' with 'docker'.
+    # If using Docker:
+    docker run \
+      --rm -it --init --hostname hpcissh --name hpcissh \
+      --mount type=bind,src=${HOME},dst=/HOST_HOMEDIR \
+      -e USER_UID=$(id -u) \
+      -e USER_GID=$(id -g) \
+      -e USER_NAME=$(id -un) \
+      ghcr.io/hpci-auth/hpcissh-almalinux10:latest
     ```
 
 2. Follow the steps in [How to use hpcissh](#how-to-use-hpcissh) inside the container.

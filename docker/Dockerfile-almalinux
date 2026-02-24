@@ -171,5 +171,6 @@ ENV LANG=ja_JP.UTF-8 \
     TZ=Asia/Tokyo
 
 WORKDIR /root
+USER root
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
 CMD ["__DEFAULT__"]

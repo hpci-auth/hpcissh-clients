@@ -7,6 +7,7 @@ fi
 
 ENTRYPOINT_D=/entrypoint.d
 INITFILE=/_entrypoint-init
+GOSU=/usr/local/bin/gosu
 
 usage() {
     if [ -n "${1:-}" ]; then
@@ -107,7 +108,7 @@ if [ ! -f $INITFILE ]; then
     ### Workaround for "sudo: PAM account management error: Authentication service cannot retrieve authentication info"
     chmod u+r /etc/shadow
 
-    touch $INITFILE
+    touch "$INITFILE"
 fi
 
 if [ "$MOUNT_HOST_HOME" != "$CONTAINER_HOME" ]; then
@@ -141,7 +142,7 @@ fi
 /usr/sbin/syslog-ng --no-caps -f /etc/syslog-ng/hpci-syslog-ng.conf
 
 if [ "$1" = "__DEFAULT__" ]; then
-    exec /usr/local/bin/gosu "$USER_NAME" /bin/sh -c "cd ~ && ${CONTAINER_SHELL}"
+    exec "$GOSU" "$USER_NAME" /bin/sh -c "cd ~ && ${CONTAINER_SHELL}"
 else
-    exec /usr/local/bin/gosu "$USER_NAME" "$@"
+    exec "$GOSU" "$USER_NAME" "$@"
 fi

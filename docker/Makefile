@@ -34,6 +34,7 @@ RUN_OPTS = $(DOCKER_INTERACTIVE)
 ifeq ($(DOCKER_CMD_NAME),podman)
   RUN_OPTS += --init
   RUN_OPTS += --hostname $(NAME)
+  RUN_OPTS += --userns=keep-id
 endif
 ifeq ($(DOCKER_CMD_NAME),docker)
   RUN_OPTS += --init
@@ -68,6 +69,7 @@ define docker_run
 	-e CONTAINER_SHELL=$(CONTAINER_SHELL) \
 	-e LANG=$(LANG) \
 	-e TZ=$(TZ) \
+	-e DEBUG_X=yes \
 	$(IMAGE_NAME_FULL) $(2)
 endef
 
