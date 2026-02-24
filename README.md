@@ -311,3 +311,11 @@ Online testing (requires active agents):
 make build install prefix=$(pwd)/LOCAL
 ./run-tests.sh --prefix $(pwd)/LOCAL <TARGET_HOSTNAME>
 ```
+
+### GitHub Actions
+
+- Release-based Tagging: Creating a release with a `vX.Y.Z` tag automatically builds and pushes container images tagged as `X.Y.Z`, `X.Y`, and `latest`.
+- Branch-based Builds: Container images are automatically generated upon pushing to the `main` and `develop` branches.
+- CI Testing:
+  - Pushes to any other branches trigger tests only (no image generation).
+  - Tests are automatically executed for all pull requests.
