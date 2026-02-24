@@ -1,6 +1,5 @@
 name: Test-Push
 
-github-actions
 on:
   push:
     branches: [ '**' ]
