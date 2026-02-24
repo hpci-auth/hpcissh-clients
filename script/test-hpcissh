@@ -1,9 +1,7 @@
 #!@bash_path@
 
-DEBUG=false
-
 set -eu
-source ${pkglibexecdir:-@pkglibexecdir@}/hpcissh-lib
+source "${pkglibexecdir:-@pkglibexecdir@}"/hpcissh-lib
 
 declare -A FQDN2USERNAME=(
     ["host1"]="user1"
@@ -20,7 +18,7 @@ get_local_account() {
     set +u
     val="${FQDN2USERNAME[$1]}"
     set -u
-    echo $val
+    echo "$val"
 }
 
 # override the function in hpcissh-lib
@@ -29,16 +27,16 @@ print_args() {
     local first=true
     local arg
     for arg in "${ARGV[@]}"; do
-	if $first; then
-	    first=false
-	else
-	    echo -n " "
-	fi
-	if [[ $arg == *" "* ]]; then
-	    echo -n "\"$arg\""
-	else
-	    echo -n "$arg"
-	fi
+        if $first; then
+            first=false
+        else
+            echo -n " "
+        fi
+        if [[ $arg == *" "* ]]; then
+            echo -n "\"$arg\""
+        else
+            echo -n "$arg"
+        fi
     done
     echo
 }
@@ -48,12 +46,13 @@ test_common() {
     shift
     local expect="$1"
     shift
-    local result=`$func "$@"`
+    local result
+    result=$($func "$@") || true
     if [ "$expect" = "$result" ]; then
-	echo "PASS: $@ ==> $expect"
+       echo "PASS: $* ==> $expect"
     else
-	echo "FAIL: $expect != $result"
-	NG=$((NG + 1))
+        echo "FAIL: $expect != $result"
+        NG=$((NG + 1))
     fi
 }
 

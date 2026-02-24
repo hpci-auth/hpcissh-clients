@@ -27,5 +27,7 @@ uninstall:
 
 test:
 
+syntax:
+
 clean:
 	$(RM) -rf build

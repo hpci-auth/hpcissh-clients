@@ -1,6 +1,4 @@
 #!@bash_path@
-# shellcheck shell=bash
-# shellcheck disable=SC2239
 
 set -eu
 

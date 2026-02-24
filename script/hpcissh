@@ -2,9 +2,9 @@
 
 set -eu
 
-source ${pkglibexecdir:-@pkglibexecdir@}/hpcissh-lib
+source "${pkglibexecdir:-@pkglibexecdir@}"/hpcissh-lib
 
-PROGNAME=`basename $0`
+PROGNAME=$(basename "$0")
 
 usage() {
     echo "Usage: ${0} [ssh command option] [user@]hostname [command]"
@@ -19,32 +19,32 @@ RAW_ARGV=("${SSH_CMD}")
 RAW_ARGV+=("${@}")
 
 ARGV=()
-for arg in `convert_ssh_arg "${RAW_ARGV[@]}"`; do
+while IFS= read -r arg; do
     ARGV+=("$arg")
-done
+done < <(convert_ssh_arg "${RAW_ARGV[@]}")
 ARGV=("${ARGV[@]:1}")
 
-DEBUG "ARGV=${ARGV[@]}"
+DEBUG "ARGV=${ARGV[*]}"
 
 # use -t for "hpcissh ... hpcissh ..."
-for i in `seq 1 ${#}`;
+for i in $(seq 1 "${#}");
 do
     set +e
-    INDEX=`expr ${i} - 1`
-    echo -n ${ARGV[${INDEX}]} | grep -E '^'${PROGNAME}'$' > /dev/null
+    INDEX=$((i - 1))
+    echo -n "${ARGV[${INDEX}]}" | grep -E '^'"${PROGNAME}"'$' > /dev/null
     RESULT=${?}
     set -e
-    if [ ${RESULT} -eq 0 ];
+    if [ "${RESULT}" -eq 0 ];
     then
         SSH_OPTS+=("-t")
         break;
     fi
 
     set +e
-    echo -n ${ARGV[${INDEX}]} | grep -E '^.*/'${PROGNAME}'$' > /dev/null
+    echo -n "${ARGV[${INDEX}]}" | grep -E '^.*/'"${PROGNAME}"'$' > /dev/null
     RESULT=${?}
     set -e
-    if [ ${RESULT} -eq 0 ];
+    if [ "${RESULT}" -eq 0 ];
     then
         SSH_OPTS+=("-t")
         break;
@@ -60,10 +60,10 @@ then  # use oidc-agent
         # hpcissh have to forward oidc-agent's unix domain socket to /tmp
         # on remote host as ssh can't create a parent directory of
         # forwarded unix domain socket
-        REMOTE_OIDC_SOCK=$(mktemp -u /tmp/oidc-agent.${SUB_CLAIM}.XXXXXXXXXXXX.sock)
+        REMOTE_OIDC_SOCK=$(mktemp -u /tmp/oidc-agent."${SUB_CLAIM}".XXXXXXXXXXXX.sock)
         SSH_OPTS+=("-R" "${REMOTE_OIDC_SOCK}:${OIDC_SOCK}")
         SSH_OPTS+=("-o" "SendEnv=OIDC_SOCK")
-        OIDC_SOCK=${REMOTE_OIDC_SOCK}
+        OIDC_SOCK="${REMOTE_OIDC_SOCK}"
     fi
     SSH_OPTS+=("-o" "SendEnv=OIDC_AGENT_CONF_NAME")
 fi

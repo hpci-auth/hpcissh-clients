@@ -2,7 +2,7 @@
 
 set -eu
 
-source ${pkglibexecdir:-@pkglibexecdir@}/hpcissh-lib
+source "${pkglibexecdir:-@pkglibexecdir@}"/hpcissh-lib
 
 usage() {
     echo "Usage: ${0} [scp command option] [[user@]host1:]file1 ... [[user@]host2:]file2"
@@ -17,14 +17,14 @@ RAW_ARGV=("${SCP_CMD}")
 RAW_ARGV+=("${@}")
 
 ARGV=()
-for arg in `convert_scp_arg "${RAW_ARGV[@]}"`; do
+while IFS= read -r arg; do
     ARGV+=("$arg")
-done
+done < <(convert_scp_arg "${RAW_ARGV[@]}")
 ARGV=("${ARGV[@]:1}")
 
 set +e
-runssh "${SCP_CMD}" -P ${HPCISSH_PORT} "${SSH_BASIC_OPTS[@]}" "${ARGV[@]}"
+runssh "${SCP_CMD}" -P "${HPCISSH_PORT}" "${SSH_BASIC_OPTS[@]}" "${ARGV[@]}"
 RESULT=${?}
-verify_hostname $RESULT
+verify_hostname "${RESULT}"
 set -e
-exit $RESULT
+exit "${RESULT}"

@@ -120,8 +120,8 @@ ${DR} "${CONFIG_SHOW_CMD}"
 
 test_common() {
     ${DR} "${GET_USERINFO_CMD}"
-    ${DR} "${HPCI_TOKEN_CMD}"
     ${DR} echo
+    ${DR} "${HPCI_TOKEN_CMD}"
     ${DR} "${PARSE_TOKEN_CMD}"
 
     # hpcissh

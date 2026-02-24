@@ -2,10 +2,10 @@
 
 set -eu
 
-source ${pkglibexecdir:-@pkglibexecdir@}/hpcissh-lib
+source "${pkglibexecdir:-@pkglibexecdir@}"/hpcissh-lib
 load_common_config
 
-PARENT_CMD=$(ps -p $PPID -o comm=)
+PARENT_CMD=$(ps -p "$PPID" -o comm=)
 PARENT_CMD=$(basename -- "$PARENT_CMD" | tr -d '-')
 SHELL_TYPE=${SHELL_TYPE:-}
 version=${version:-}  # tcsh version
@@ -104,7 +104,7 @@ case "$DETECTED_SHELL" in
                 ;;
         esac
         set +e
-        eval $("${OIDC_AGENT_SERVICE}" "${@}") >&2
+        eval "$("${OIDC_AGENT_SERVICE}" "${@}")" >&2
         ret=$?
         if [ $ret -ne 0 ]; then
             exit $ret

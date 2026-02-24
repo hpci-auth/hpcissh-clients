@@ -68,10 +68,10 @@ _get_token() {
     # ex. /tmp/jwt_user_u1000/token.jwt
     DEBUG "USE_JWT_AGENT=$USE_JWT_AGENT"
     local expired=0
-    if [ "$USE_JWT_AGENT" = yes ]; then  # use jwt-agent
+    if [ "$USE_JWT_AGENT" = "yes" ]; then  # use jwt-agent
         local token_file="${JWT_USER_PATH:-}"
 
-        if [ -n "$token_file" -a -r "$token_file" ]; then
+        if [ -n "$token_file" ] && [ -r "$token_file" ]; then
             DEBUG "OIDC_AT: use JWT_USER_PATH ($token_file)"
             OIDC_AT=$(cat "$token_file")
         fi
@@ -85,8 +85,8 @@ _get_token() {
             fi
         fi
     fi
-    if [ -z "$OIDC_AT" -a -n "${OIDC_SOCK:-}" ]; then  # use oidc-agent
-        if OIDC_AT=$(oidc-token -t ${OIDC_AT_LEAST_VALID_TIME} ${OIDC_AGENT_CONF_NAME}); then
+    if [ -z "$OIDC_AT" ] && [ -n "${OIDC_SOCK:-}" ]; then  # use oidc-agent
+        if OIDC_AT=$(oidc-token -t "${OIDC_AT_LEAST_VALID_TIME}" "${OIDC_AGENT_CONF_NAME}"); then
             DEBUG "OIDC_AT: use oidc-token command"
         else
             ERROR "'oidc-token ${OIDC_AGENT_CONF_NAME}' failed"
@@ -99,7 +99,7 @@ _get_token() {
     fi
 
     # global
-    OIDC_AT_DECODED=`decode_jwt | jq .`
+    OIDC_AT_DECODED=$(decode_jwt | jq .)
     if $CHECK_EXPIRED && is_jwt_expired; then
 	    WARN "Expired access token is found."
 	    # not error
@@ -108,7 +108,7 @@ _get_token() {
     if [ -n "${OIDC_USERINFO_ENDPOINT}" ]; then
         _USERINFO_ENDPOINT="${OIDC_USERINFO_ENDPOINT}"
     else
-        _ISSUER=`get_claim iss`
+        _ISSUER=$(get_claim iss)
         _USERINFO_ENDPOINT="${_ISSUER}${OIDC_USERINFO_ENDPOINT_PATH}"
     fi
 }
@@ -338,7 +338,6 @@ check_and_print_local_accounts() {
 fetch_local_accounts_json() {
     set -eu
     local USE_CACHE="$1"
-    local token
 
     if $USE_CACHE; then
         if [ -f "$HPCISSH_LOCAL_ACCOUNTS" ]; then
@@ -351,16 +350,16 @@ fetch_local_accounts_json() {
     fi
     local tmpfile
     tmpfile="${HPCISSH_LOCAL_ACCOUNTS}.tmp"
-    touch $tmpfile
-    chmod 600 $tmpfile
+    touch "$tmpfile"
+    chmod 600 "$tmpfile"
     DEBUG "DOWNLOAD userinfo"
-    if print_userinfo > $tmpfile; then
-        mv $tmpfile "$HPCISSH_LOCAL_ACCOUNTS"
+    if print_userinfo > "$tmpfile"; then
+        mv "$tmpfile" "$HPCISSH_LOCAL_ACCOUNTS"
         check_and_print_local_accounts "$HPCISSH_LOCAL_ACCOUNTS"
         return 0
     else
         rv=$?
-        rm -f $tmpfile
+        rm -f "$tmpfile"
         return $rv
     fi
 }
@@ -393,12 +392,12 @@ load_local_accounts_switch() {
     local ACCMAP_LIST=()
 
     set +eu
-    mapfile -t ACCMAP_LIST < <(fetch_local_accounts_json $USE_CACHE \
+    mapfile -t ACCMAP_LIST < <(fetch_local_accounts_json "$USE_CACHE" \
         | jq -r '.["local-accounts"] | to_entries | .[] | .key + " " + .value' 2> /dev/null)
     # ex. ACCMAP_LIST[0]="oauth-server1.test test02"
 
     # If "set -e" is not used, "ACCMAP_LIST[@]: unbound variable" will occur.
-    local CHECK_LIST="${ACCMAP_LIST[@]}"
+    local CHECK_LIST="${ACCMAP_LIST[*]}"
     set -eu
     if [ -z "$CHECK_LIST" ]; then
         DEBUG "NO local-accounts"
@@ -412,9 +411,9 @@ load_local_accounts_switch() {
     local FQDN
     for i in "${ACCMAP_LIST[@]}"; do
         # conv_key: keys for associative array variable of bash
-        FQDN=`echo $i | cut -d ' ' -f 1`
-        key="$KEY_PREFIX"`echo $FQDN | conv_key`
-        value=`echo $i | cut -d ' ' -f 2`
+        FQDN=$(echo "$i" | cut -d ' ' -f 1)
+        key="${KEY_PREFIX}$(echo "$FQDN" | conv_key)"
+        value=$(echo "$i" | cut -d ' ' -f 2)
         ACCMAP[${key}]="$value"
         DEBUG "ACCMAP[($FQDN)$key]=${ACCMAP[$key]}"
     done
@@ -445,18 +444,17 @@ load_local_accounts() {
         local EXPIRE=${OIDC_USERINFO_EXPIRE}
         local current_time
         local mtime
-        local onedayago
         current_time=$(date +%s)
         mtime=$(get_mtime "$HPCISSH_LOCAL_ACCOUNTS")  # modification time
         expired=$((mtime + EXPIRE))
-        DEBUG current_time=$current_time
-        DEBUG mtime=$mtime
-        DEBUG expired=$expired
+        DEBUG current_time="$current_time"
+        DEBUG mtime="$mtime"
+        DEBUG expired="$expired"
         if [ "$current_time" -le "$expired" ]; then
             DEBUG "SKIP downloading userinfo (use cache)"
 
             USE_CACHE=true
-            load_local_accounts_switch $USE_CACHE
+            load_local_accounts_switch "$USE_CACHE"
             return
         fi
         # expired
@@ -464,19 +462,19 @@ load_local_accounts() {
     # update JSON file once
     # download userinfo
     USE_CACHE=false
-    load_local_accounts_switch $USE_CACHE
+    load_local_accounts_switch "$USE_CACHE"
 }
 
 get_local_account() {
     local FQDN="$1"
     local key
     DEBUG "FQDN=$FQDN"
-    key=`echo $FQDN | conv_key`
+    key=$(echo "$FQDN" | conv_key)
     key="${KEY_PREFIX}${key}"
     DEBUG "FQDN(sha256)=$key"
 
     set +u
-    echo ${ACCMAP[$key]}
+    echo "${ACCMAP[$key]}"
     set -u
 }
 
@@ -501,11 +499,11 @@ set_OIDC_ENCRYPTION_PW() {
         else
             echo -n "${CYAN}Enter decryption password for account config '${CONF_NAME}': ${RESET}"
         fi
-        read -s OIDC_ENCRYPTION_PW
+        read -rs OIDC_ENCRYPTION_PW
         echo
         if [ "$confirm" = yes ]; then
             echo -n "${CYAN}Confirm encryption password: ${RESET}"
-            read -s OIDC_ENCRYPTION_PW_2
+            read -rs OIDC_ENCRYPTION_PW_2
             echo
             if [ "$OIDC_ENCRYPTION_PW" = "$OIDC_ENCRYPTION_PW_2" ]; then
                 break
@@ -566,11 +564,11 @@ load_conf() {
         oidc-gen --pub \
             $OPT_PW_ENV \
             -w device \
-            --issuer=${ISSUER} \
+            --issuer="${ISSUER}" \
             --scope="${SCOPES}" \
             --redirect-uri=http://localhost:8080/ \
-            --aud=${AUDIENCE} \
-            ${CONF_NAME}
+            --aud="${AUDIENCE}" \
+            "${CONF_NAME}"
     fi
 }
 
@@ -586,7 +584,7 @@ warning_not_found_localacc() {
     local username=${USER:-}
 
     if [ -z "$username" ]; then
-        username=`whoami`
+        username=$(whoami)
     fi
     WARN "Failed to find your remote username corresponding to the specified OAuth-SSH server.  Your local username (${username}) will be specified instead."
 }
@@ -607,14 +605,13 @@ print_args() {
 convert_ssh_arg() {
     local ARGV=("$@")
     local argnum=${#ARGV[*]}
-    local maxidx=$(($argnum - 1))
+    local maxidx=$((argnum - 1))
     local ARG
-    local NEXTARG
     local found=false
 
     load_local_accounts
 
-    for i in `seq 1 $maxidx`; do
+    for i in $(seq 1 "$maxidx"); do
         ARG=${ARGV[${i}]}
         case "$ARG" in
             -*)  # is option
@@ -623,31 +620,19 @@ convert_ssh_arg() {
         esac
         # ARG is not a option
 
-        # if [ $i -eq $maxidx ]; then
-        #     NEXTARG=
-        # else
-        #     NEXTARG=${ARGV[$(($i + 1))]}
-        # fi
-        # case "$NEXTARG" in
-        #     -*)
-        #         # CASE: ssh -l USER -v host
-        #         # not supported (ssh allows): ssh host -l user command
-        #         continue
-        # esac
-
         # Convert the first matching host.
-        localacc=`get_local_account "$ARG"`
+        localacc=$(get_local_account "$ARG")
         if [ -n "$localacc" ]; then
             found=true
             # CASE: ssh -l name name
 
             # ARG is hostname
             local USERHOST="${localacc}@${ARG}"
-            ARGV[${i}]=${USERHOST}  # update
+            ARGV[i]="${USERHOST}"  # update
             break
         fi
     done
-    if ! $found; then
+    if ! "$found"; then
         #warning_not_found_localacc
         DEBUG "unknown hpcissh server"
     fi
@@ -693,8 +678,11 @@ split_user_host_file() {
         DEBUG "_HPCISSH_HOST=\"$host\""
         DEBUG "_HPCISSH_FILE=\"$file\""
     fi
+    # shellcheck disable=SC2034
     ref_USER="$user"
+    # shellcheck disable=SC2034
     ref_HOST="$host"
+    # shellcheck disable=SC2034
     ref_FILE="$file"
 }
 
@@ -706,12 +694,12 @@ convert_scp_arg() {
 
     local ARGV=("$@")
     local argnum=${#ARGV[*]}
-    if [ $argnum -lt 3 ]; then
+    if [ "$argnum" -lt 3 ]; then
         echo "INVALID SYNTAX"
         return 1
     fi
 
-    local maxidx=$(($argnum - 1))
+    local maxidx=$((argnum - 1))
     local _HPCISSH_USER=
     local _HPCISSH_HOST=
     local _HPCISSH_FILE=
@@ -720,7 +708,7 @@ convert_scp_arg() {
     load_local_accounts
 
     # convert from last arg
-    for i in `seq $maxidx -1 1`; do
+    for i in $(seq "$maxidx" -1 1); do
         ARG=${ARGV[$i]}
         case "$ARG" in
             -*)
@@ -733,17 +721,17 @@ convert_scp_arg() {
             split_user_host_file _HPCISSH_USER _HPCISSH_HOST _HPCISSH_FILE "$ARG" scp
             if [ -n "$_HPCISSH_HOST" ]; then
                 if [ -z "$_HPCISSH_USER" ]; then
-                    _HPCISSH_USER=`get_local_account "$_HPCISSH_HOST"`
+                    _HPCISSH_USER=$(get_local_account "$_HPCISSH_HOST")
                     if [ -n "$_HPCISSH_USER" ]; then
                         found=true
                         # update
-                        ARGV[$i]="${_HPCISSH_USER}@${ARG}"
+                        ARGV[i]="${_HPCISSH_USER}@${ARG}"
                     fi
                 fi
             fi
         fi
     done
-    if ! $found; then
+    if ! "$found"; then
         #warning_not_found_localacc
         DEBUG "unknown hpcissh server"
     fi
@@ -755,12 +743,12 @@ convert_sftp_arg() {
 
     local ARGV=("$@")
     local argnum=${#ARGV[*]}
-    if [ $argnum -lt 2 ]; then
+    if [ "$argnum" -lt 2 ]; then
         echo "INVALID SYNTAX"
         return 1
     fi
 
-    local targetidx=$(($argnum - 1))
+    local targetidx=$((argnum - 1))
     local DST=${ARGV[$targetidx]}
     local _HPCISSH_USER=
     local _HPCISSH_HOST=
@@ -785,15 +773,15 @@ convert_sftp_arg() {
     split_user_host_file _HPCISSH_USER _HPCISSH_HOST _HPCISSH_FILE "$DST" sftp
     if [ -n "$_HPCISSH_HOST" ]; then
         if [ -z "$_HPCISSH_USER" ]; then
-            _HPCISSH_USER=`get_local_account "$_HPCISSH_HOST"`
+            _HPCISSH_USER=$(get_local_account "$_HPCISSH_HOST")
             if [ -n "$_HPCISSH_USER" ]; then
                 found=true
                 # update
-                ARGV[$targetidx]="${_HPCISSH_USER}@${DST}"
+                ARGV[targetidx]="${_HPCISSH_USER}@${DST}"
             fi
         fi
     fi
-    if ! $found; then
+    if ! "$found"; then
         #warning_not_found_localacc
         DEBUG "unknown hpcissh server"
     fi
@@ -803,23 +791,23 @@ convert_sftp_arg() {
 verify_hostname() {
     local RESULT=$1
 
-    if [ ${RESULT} -eq 6 ]; then
+    if [ "${RESULT}" -eq 6 ]; then
         ERROR "Host verification may have failed. Please check /etc/ssh/ssh_known_hosts or ~/.ssh/known_hosts"
     fi
 }
 
 pad_base64() {
-    local data=$1===
+    local data="$1"===
     local count
-    count=$(echo -n $data | wc -c)
+    count=$(echo -n "$data" | wc -c)
     count=$((count / 4 * 4))
-    echo $data | cut -b -$count
+    echo "$data" | cut -b -"$count"
 }
 
 decode_jwt() {
     for i in 1 2; do
-        b64=$(echo $OIDC_AT | cut -d. -f $i)
-        pad_base64 $b64 | base64 -d
+        b64=$(echo "$OIDC_AT" | cut -d. -f "$i")
+        pad_base64 "$b64" | base64 -d
     done
 }
 
@@ -842,11 +830,11 @@ check_expired() {
     local sec
     local remain=0
     local datetime
-    while read key val; do
+    while read -r key val; do
         case $key in
             \"exp\":)
-                sec=$(echo $val | cut -d, -f 1)
-                [ $is_expired = 0 ] && is_expired=$((sec < current))
+                sec=$(echo "$val" | cut -d, -f 1)
+                [ "$is_expired" = 0 ] && is_expired=$((sec < current))
                 remain=$((sec - current))
 		break
                 ;;
@@ -857,16 +845,16 @@ check_expired() {
             #    ;;
         esac
     done
-    if $report; then
+    if "$report"; then
 	datetime=$(date)
         # 1 is True
-	if [ $is_expired -eq 1 ]; then
+	if [ "$is_expired" -eq 1 ]; then
 		ERROR "Access token is expired. (${datetime})"
-	elif [ $remain -gt 0 ]; then
+	elif [ "$remain" -gt 0 ]; then
 		INFO "remaining time: ${remain} sec."
 	fi
     fi
-    if [ $is_expired -eq 1 ]; then
+    if [ "$is_expired" -eq 1 ]; then
         return 1  # failure
     else
         return 0  # success

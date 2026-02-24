@@ -2,6 +2,6 @@
 
 set -eu
 
-source ${pkglibexecdir:-@pkglibexecdir@}/hpcissh-lib
+source "${pkglibexecdir:-@pkglibexecdir@}"/hpcissh-lib
 
 print_version

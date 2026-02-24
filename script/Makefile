@@ -40,5 +40,8 @@ uninstall:
 test:
 	$(prefix)/bin/test-hpcissh
 
+syntax:
+	shellcheck -s bash -e SC2239 -x $(bin_SCRIPTS) $(pkglibexec_SCRIPTS)
+
 clean:
 	$(RM) -rf build

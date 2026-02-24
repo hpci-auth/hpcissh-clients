@@ -2,7 +2,7 @@
 
 set -eu
 
-source ${pkglibexecdir:-@pkglibexecdir@}/hpcissh-lib
+source "${pkglibexecdir:-@pkglibexecdir@}"/hpcissh-lib
 
 usage() {
     echo "Usage: ${0} [sftp command option] host"
@@ -18,14 +18,14 @@ RAW_ARGV=("${SFTP_CMD}")
 RAW_ARGV+=("${@}")
 
 ARGV=()
-for arg in $(convert_sftp_arg "${RAW_ARGV[@]}"); do
+while IFS= read -r arg; do
     ARGV+=("$arg")
-done
+done < <(convert_sftp_arg "${RAW_ARGV[@]}")
 ARGV=("${ARGV[@]:1}")
 
 set +e
-runssh "${SFTP_CMD}" -P ${HPCISSH_PORT} "${SSH_BASIC_OPTS[@]}" "${ARGV[@]}"
+runssh "${SFTP_CMD}" -P "${HPCISSH_PORT}" "${SSH_BASIC_OPTS[@]}" "${ARGV[@]}"
 RESULT=${?}
-verify_hostname $RESULT
+verify_hostname "${RESULT}"
 set -e
-exit $RESULT
+exit "${RESULT}"

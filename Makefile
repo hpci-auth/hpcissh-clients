@@ -2,11 +2,15 @@
 
 SUBDIRS = script data
 
-.PHONY: all build install uninstall test clean $(SUBDIRS)
+.PHONY: all build install uninstall test clean syntax $(SUBDIRS)
 
-all build install uninstall test clean:
+all build install uninstall test clean syntax:
 	@for dir in $(SUBDIRS); do \
 		echo "[=== Entering directory: $$dir (target: $@) ===]"; \
 		$(MAKE) -C $$dir $@ || exit 1; \
 		echo "[=== Leaving directory: $$dir ===]"; \
 	done
+	@if [ "$@" = "syntax" ]; then \
+		echo "[=== Checking root scripts ===]"; \
+		shellcheck run-tests.sh || exit 1; \
+	fi
