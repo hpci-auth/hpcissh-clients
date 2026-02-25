@@ -266,6 +266,8 @@ Choose the agent that fits your workflow. **`jwt-agent` is recommended for most 
 5. (Refer to "**Connect to a SSH Server**")
 6. (To stop): `eval $(oidc-agent-service stop)`
 
+![demo-oidcagent](./asciinema/oidcagent.gif)
+
 ### Step 2: Connect to a SSH Server
 
 ```bash
