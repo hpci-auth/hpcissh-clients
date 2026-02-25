@@ -249,6 +249,8 @@ Choose the agent that fits your workflow. **`jwt-agent` is recommended for most 
 4. (Refer to "**Connect to a SSH Server**")
 5. (To stop): `jwt-agent --stop`
 
+![demo-jwtagent](./asciinema/jwtagent.gif)
+
 #### Option B: Using `oidc-agent`
 
 1. Set `USE_JWT_AGENT=no` in `~/.hpcissh`.
