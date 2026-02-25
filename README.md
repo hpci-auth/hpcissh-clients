@@ -6,6 +6,7 @@ OAuth-based SSH client toolset for HPCI.
 
 The following tools are required for the scripts to function:
 
+- `OpenSSH`: Remote login tools with the SSH protocol.
 - `jq`: JSON processor.
 - `curl`: Tool for transferring data with URLs.
 - `sshpass`: Non-interactive SSH password provider.
@@ -133,7 +134,7 @@ podman build -f Dockerfile-almalinux -t hpcissh-almalinux10:localdev \
     brew install oidc-agent
     ```
 
-![demo-macos](./vhs/macos.gif)
+![demo-macos](./asciinema/macos.gif)
 
 #### Upgrading or Uninstalling
 
