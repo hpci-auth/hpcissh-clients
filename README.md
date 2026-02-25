@@ -34,10 +34,12 @@ implications of these permissions before using Docker.
 
 - **WSL2 (Windows 11)**:
   - There are two ways to install Podman.
+    - WSL2 is required for both methods.
+      - See: <https://learn.microsoft.com/en-us/windows/wsl/install>
   - Option A: Install Podman within Ubuntu on WSL2
-    - Run `sudo apt-get -y install podman`.
+    - Run `sudo apt-get update && sudo apt-get -y install podman`
   - Option B: Download Podman Installer (Podman CLI for Windows) from <https://podman.io/>
-    - Install it
+    - Run the installer and follow the on-screen instructions.
     - (In Powershell) Run `podman machine init` and `podman machine start`
 - **macOS**:
   - There are two ways to install Podman.
@@ -46,11 +48,13 @@ implications of these permissions before using Docker.
     2. Run `brew install podman`
     3. Run `podman machine init && podman machine start`
   - Option B: Download Podman Installer (Podman CLI for macOS) from <https://podman.io/>
-    - Install it
-    - (macOS Terminal) Run `podman machine init && podman machine start`
+    - Run the installer and follow the on-screen instructions.
+    - Run `podman machine init && podman machine start`
 - **Linux Distributions**: Install Podman via the package manager
-  - (Debian / Ubuntu) Run `sudo apt-get -y install podman`
-  - (RHEL / AlmaLinux / Rocky Linux / etc.) Run `sudo dnf -y install podman`
+  - Debian / Ubuntu:
+    - Run `sudo apt-get update && sudo apt-get -y install podman`
+  - RHEL / RHEL-based (AlmaLinux / Rocky Linux / etc.):
+    - Run `sudo dnf -y install podman`
 
 For more details, refer to <https://podman.io/docs/installation>.
 
