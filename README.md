@@ -17,7 +17,7 @@ The following tools are required for the scripts to function:
 
 ## Installation
 
-### 1. Using Container for Podman (or Docker)
+### Case 1: Using Container for Podman (or Docker)
 
 The easiest way to get started without manually installing all dependencies.
 
@@ -25,6 +25,10 @@ The easiest way to get started without manually installing all dependencies.
 (rootless). In contrast, Docker typically runs with elevated
 privileges. Please ensure you fully understand the security
 implications of these permissions before using Docker.
+
+#### Demo: Deploying with Podman
+
+![demo-podman](./asciinema/podman.gif)
 
 #### OS-specific Podman Setup
 
@@ -88,7 +92,7 @@ For more details, refer to <https://podman.io/docs/installation>.
         ghcr.io/hpci-auth/hpcissh-almalinux10:latest
     ```
 
-2. Follow the steps in [How to use hpcissh](#how-to-use-hpcissh) inside the container.
+2. Follow the steps in [Using hpcissh](#using-hpcissh) inside the container.
 3. Type `exit` to quit. The container is automatically removed.
     - **Warning**: Any files stored strictly within the container are volatile and will be deleted automatically.
       Always copy important data to `~/HOST_HOMEDIR/` for permanent storage.
@@ -116,7 +120,13 @@ podman build -f Dockerfile-almalinux -t hpcissh-almalinux10:localdev \
 
 ---
 
-### 2. macOS (Native via Homebrew)
+### Case 2: macOS Native package via Homebrew
+
+#### Demo: Deploying on macOS
+
+![demo-macos](./asciinema/macos.gif)
+
+#### Installing hpcissh for macOS
 
 1. **Install Homebrew**: <https://brew.sh/>
 2. **Install hpcissh**:
@@ -134,8 +144,6 @@ podman build -f Dockerfile-almalinux -t hpcissh-almalinux10:localdev \
     brew install oidc-agent
     ```
 
-![demo-macos](./asciinema/macos.gif)
-
 #### Upgrading or Uninstalling
 
 ```bash
@@ -149,18 +157,22 @@ brew uninstall oidc-agent && brew untap indigo-dc/oidc-agent
 
 ---
 
-### 3. Manual Installation
+### Case 3: Manual Setup
 
 **Prerequisites**: Ensure all [Dependencies](#dependencies) are installed.
 
-#### System-wide Installation (Requires sudo)
+#### Manual Setup: System-wide Installation
+
+(Requires sudo)
 
 ```bash
 make
 sudo make install
 ```
 
-#### User-local Installation (e.g., to `~/.local`)
+#### Manual Setup: User-local Installation
+
+(e.g., to `~/.local`)
 
 ```bash
 make build install prefix=$HOME/.local
@@ -172,6 +184,8 @@ For macOS
 make build install prefix=$HOME/.local bash_path=$(brew --prefix)/bin/bash
 ```
 
+Note: `/bin/bash` is bash version 3
+
 **Apply PATH changes**: Add this to your `~/.bashrc` or `~/.zshrc`:
 
 ```bash
@@ -182,7 +196,9 @@ To apply immediately, run `export PATH="$HOME/.local/bin:$PATH"`
 
 ---
 
-## Configuration
+## Configurations
+
+**No changes needed** for default settings.
 
 ### SSH CA (Public Key) for HPCI
 
@@ -206,7 +222,7 @@ The following files are managed automatically by `oidc-sshconf-hpci`:
 
 ---
 
-## How to use hpcissh
+## Using hpcissh
 
 ### Step 1: Obtain an Access Token
 
