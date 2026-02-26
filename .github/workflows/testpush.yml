@@ -89,10 +89,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Shellcheck
+        working-directory: ./
+        run: |
+          make syntax
+
       - name: Test image
         working-directory: ./docker
         run: |
-          make syntax
           make test DOCKER_CMD=docker IMAGE_NAME_FULL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
 
       - name: Export digest
