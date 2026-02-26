@@ -57,6 +57,8 @@ implications of these permissions before using Docker.
     - Run `sudo apt-get update && sudo apt-get -y install podman`
   - RHEL / RHEL-based (AlmaLinux / Rocky Linux / etc.):
     - Run `sudo dnf -y install podman`
+    - Run `sudo loginctl enable-linger <USERNAME_FOR_PODMAN>`
+      - Run this for all users who will be using Podman.
 
 For more details, refer to <https://podman.io/docs/installation>.
 
