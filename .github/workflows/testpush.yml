@@ -7,14 +7,14 @@ on:
     tags: [ '*.*.*' ]
     paths:
       - '.github/**'
-      - 'scripts/**'
+      - 'script/**'
       - 'docker/**'
       - 'Makefile'
   pull_request:
     branches: [ 'main' ]
     paths:
       - '.github/**'
-      - 'src/**'
+      - 'script/**'
       - 'docker/**'
       - 'Makefile'
 env:
