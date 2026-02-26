@@ -6,11 +6,12 @@ source "${pkglibexecdir:-@pkglibexecdir@}"/hpcissh-lib
 
 load_common_config
 
+# shellcheck disable=SC2154
 ISSUER="${OIDC_ISSUER}"
 SCOPES="openid hpci offline_access scitokens"
 AUDIENCE="hpci"
 
-if [ "${#}" -eq 0 ];
+if [[ "${#}" -eq 0 ]];
 then
     CONF_NAME="hpci"
 else

@@ -8,4 +8,4 @@ load_common_config
 
 # support jwt-agent and oidc-agent
 get_token_ignore_expired
-echo "$OIDC_AT"
+echo "${OIDC_AT}"

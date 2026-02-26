@@ -16,43 +16,46 @@ load_local_accounts() {
 # override the function in hpcissh-lib
 get_local_account() {
     set +u
-    val="${FQDN2USERNAME[$1]}"
+    local val="${FQDN2USERNAME[${1}]}"
     set -u
-    echo "$val"
+    echo "${val}"
 }
 
 # override the function in hpcissh-lib
 print_args() {
-    local ARGV=("$@")
+    local ARGV=("${@}")
     local first=true
     local arg
     for arg in "${ARGV[@]}"; do
-        if $first; then
-            first=false
-        else
-            echo -n " "
-        fi
-        if [[ $arg == *" "* ]]; then
-            echo -n "\"$arg\""
-        else
-            echo -n "$arg"
-        fi
+	if [[ "${first}" == "true" ]]; then
+	    first=false
+	else
+	    echo -n " "
+	fi
+	if [[ "${arg}" == *" "* ]]; then
+	    echo -n "\"${arg}\""
+	else
+	    echo -n "${arg}"
+	fi
     done
     echo
 }
 
 test_common() {
-    local func="$1"
+    local func="${1}"
     shift
-    local expect="$1"
+    local expect="${1}"
     shift
     local result
-    result=$($func "$@") || true
-    if [ "$expect" = "$result" ]; then
-       echo "PASS: $* ==> $expect"
+    set +e
+    result=$("${func}" "${@}")
+    local status="${?}"
+    set -e
+    if [[ "${expect}" == "${result}" ]]; then
+	echo "PASS: ${*} ==> ${expect} (status: ${status})"
     else
-        echo "FAIL: $expect != $result"
-        NG=$((NG + 1))
+	echo "FAIL: expected '${expect}', got '${result}' (status: ${status})"
+	NG=$((NG + 1))
     fi
 }
 
@@ -61,20 +64,19 @@ conv_key_abc() {
 }
 
 test_conv_key() {
-    local val
     test_common conv_key_abc ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad "test_conv_key"
 }
 
 test_convert_ssh_arg() {
-    test_common convert_ssh_arg "$@"
+    test_common convert_ssh_arg "${@}"
 }
 
 test_convert_scp_arg() {
-    test_common convert_scp_arg "$@"
+    test_common convert_scp_arg "${@}"
 }
 
 test_convert_sftp_arg() {
-    test_common convert_sftp_arg "$@"
+    test_common convert_sftp_arg "${@}"
 }
 
 load_common_config
@@ -126,7 +128,7 @@ test_convert_sftp_arg "sftp user2@host2:file file" sftp host2:file file
 test_convert_sftp_arg 'sftp "user2@host2:a b"' sftp "host2:a b"
 test_convert_sftp_arg 'sftp "user2@host2:a b" "c d"' sftp "host2:a b" "c d"
 
-if [ $NG -gt 0 ]; then
+if [[ "${NG}" -gt 0 ]]; then
     echo "Some tests failed."
     exit 1
 fi

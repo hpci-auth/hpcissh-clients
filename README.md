@@ -217,6 +217,7 @@ To manually update:
 ```bash
 # System-wide
 sudo hpcissh-append-ssh-ca --system --update
+
 # User-specific
 hpcissh-append-ssh-ca --user --update
 ```

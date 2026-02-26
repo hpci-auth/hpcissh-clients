@@ -11,20 +11,24 @@ usage() {
 init_common "${@}"
 get_token
 
+# shellcheck disable=SC2154
+: "${HPCISSH_PORT}"
+
 SCP_CMD="${SCP_CMD:-scp}"
 
 RAW_ARGV=("${SCP_CMD}")
 RAW_ARGV+=("${@}")
 
 ARGV=()
+CONVERTED_SCP_ARG=$(convert_scp_arg "${RAW_ARGV[@]}")
 while IFS= read -r arg; do
-    ARGV+=("$arg")
-done < <(convert_scp_arg "${RAW_ARGV[@]}")
+    ARGV+=("${arg}")
+done <<< "${CONVERTED_SCP_ARG}"
 ARGV=("${ARGV[@]:1}")
 
 set +e
 runssh "${SCP_CMD}" -P "${HPCISSH_PORT}" "${SSH_BASIC_OPTS[@]}" "${ARGV[@]}"
-RESULT=${?}
+RESULT="${?}"
 verify_hostname "${RESULT}"
 set -e
 exit "${RESULT}"

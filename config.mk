@@ -12,6 +12,7 @@ RM = rm
 INSTALL = install -c
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
+SHELLCHECK = shellcheck -o all -s bash -x
 
 do_subst = $(SED) -e 's,[@]bindir[@],$(bindir),g' \
 		-e 's,[@]pkglibexecdir[@],${pkglibexecdir},g' \

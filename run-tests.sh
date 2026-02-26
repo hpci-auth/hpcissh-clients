@@ -4,14 +4,14 @@ set -eEu
 
 usage() {
     local exit_code="${1:-1}"  # 1: error
-    if [ "$exit_code" -ne 0 ]; then
+    if [[ "${exit_code}" -ne 0 ]]; then
         exec 1>&2
     fi
-    echo "Usage: $0 REMOTE_HOST [--run] [--prefix PREFIX]"
+    echo "Usage: ${0} REMOTE_HOST [--run] [--prefix PREFIX]"
     echo "  --run            Actually run tests (Default: dry run)"
     echo "  --prefix PREFIX  Installed prefix of hpcissh"
     echo "  -h|--help        Show this help message"
-    exit "$exit_code"
+    exit "${exit_code}"
 }
 
 RUN=false
@@ -33,14 +33,14 @@ CONFIG_SHOW_CMD=hpcissh-config-show
 
 REMOTE_HOST=
 
-while [ $# -gt 0 ]; do
-    case "$1" in
+while [[ $# -gt 0 ]]; do
+    case "${1}" in
         --run)
             RUN=true
             shift
             ;;
         --prefix)
-            PREFIX="$2"
+            PREFIX="${2}"
             shift 2
             HPCISSH_CMD="${PREFIX}/bin/hpcissh"
             HPCISCP_CMD="${PREFIX}/bin/hpciscp"
@@ -55,11 +55,11 @@ while [ $# -gt 0 ]; do
             usage 0
             ;;
         *)
-            if [ -z "${REMOTE_HOST}" ]; then
-                REMOTE_HOST="$1"
+            if [[ -z "${REMOTE_HOST}" ]]; then
+                REMOTE_HOST="${1}"
                 shift
             else
-                echo "Error: Unknown argument '$1'"
+                echo "Error: Unknown argument '${1}'"
                 usage 1
             fi
             ;;
@@ -68,17 +68,17 @@ done
 
 error_handler() {
     set +x
-    local code=$1
-    local line=$2
-    local command=$3
+    local code="${1}"
+    local line="${2}"
+    local command="${3}"
 
     echo "------------------------------------------------"
     echo "  [ERROR]"
-    echo "  Line:    $line"
-    echo "  Command: $command"
-    echo "  Status:  $code"
+    echo "  Line:    ${line}"
+    echo "  Command: ${command}"
+    echo "  Status:  ${code}"
     echo "------------------------------------------------"
-    exit "$code"
+    exit "${code}"
 }
 
 TESTFILE_NAME=hpcissh_testfile_${UID}_$$
@@ -129,7 +129,7 @@ test_common() {
     ${DR} "${HPCISSH_CMD}" "${REMOTE_HOST}" hostname
 
     # hcpiscp
-    openssl rand -base64 12 | tee "${TESTFILE_PATH_1}"
+    openssl rand -base64 12 > "${TESTFILE_PATH_1}"
     ${DR} sleep 1
     ${DR} "${HPCISCP_CMD}" "${TESTFILE_PATH_1}" "${REMOTE_HOST}":"${TESTFILE_REMOTE_NAME}"
     ${DR} sleep 1
@@ -137,7 +137,7 @@ test_common() {
     ${DR} diff "${TESTFILE_PATH_1}" "${TESTFILE_PATH_2}"
 
     # hpcisftp
-    openssl rand -base64 12 | tee "${TESTFILE_PATH_1}"
+    openssl rand -base64 12 > "${TESTFILE_PATH_1}"
     # NOTE: sftp args cannnot upload a file
     ${DR} sleep 1
     ${DR} "${HPCISCP_CMD}" "${TESTFILE_PATH_1}" "${REMOTE_HOST}":"${TESTFILE_REMOTE_NAME}"
@@ -152,4 +152,6 @@ test_common
 ${DR} export USE_JWT_AGENT=no
 test_common
 
-echo "All tests passed."
+if ${RUN}; then
+    echo "All tests passed."
+fi

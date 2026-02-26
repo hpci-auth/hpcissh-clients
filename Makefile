@@ -1,6 +1,7 @@
 # Makefile for hpcissh
 
 SUBDIRS = script data
+SHELLCHECK = shellcheck -o all -s bash -x
 
 .PHONY: all build install uninstall test clean syntax $(SUBDIRS)
 
@@ -11,6 +12,6 @@ all build install uninstall test clean syntax:
 		echo "[=== Leaving directory: $$dir ===]"; \
 	done
 	@if [ "$@" = "syntax" ]; then \
-		shellcheck run-tests.sh || exit 1; \
-		shellcheck docker/entrypoint.sh || exit 1; \
+		$(SHELLCHECK) run-tests.sh || exit 1; \
+		$(SHELLCHECK) docker/entrypoint.sh || exit 1; \
 	fi

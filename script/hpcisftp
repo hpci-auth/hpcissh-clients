@@ -12,20 +12,24 @@ usage() {
 init_common "${@}"
 get_token
 
+# shellcheck disable=SC2154
+: "${HPCISSH_PORT}"
+
 SFTP_CMD="${SFTP_CMD:-sftp}"
 
 RAW_ARGV=("${SFTP_CMD}")
 RAW_ARGV+=("${@}")
 
 ARGV=()
+CONVERTED_SFTP_ARG=$(convert_sftp_arg "${RAW_ARGV[@]}")
 while IFS= read -r arg; do
-    ARGV+=("$arg")
-done < <(convert_sftp_arg "${RAW_ARGV[@]}")
+    ARGV+=("${arg}")
+done <<< "${CONVERTED_SFTP_ARG}"
 ARGV=("${ARGV[@]:1}")
 
 set +e
 runssh "${SFTP_CMD}" -P "${HPCISSH_PORT}" "${SSH_BASIC_OPTS[@]}" "${ARGV[@]}"
-RESULT=${?}
+RESULT="${?}"
 verify_hostname "${RESULT}"
 set -e
 exit "${RESULT}"

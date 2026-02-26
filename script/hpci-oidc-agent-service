@@ -5,35 +5,35 @@ set -eu
 source "${pkglibexecdir:-@pkglibexecdir@}"/hpcissh-lib
 load_common_config
 
-PARENT_CMD=$(ps -p "$PPID" -o comm=)
-PARENT_CMD=$(basename -- "$PARENT_CMD" | tr -d '-')
-SHELL_TYPE=${SHELL_TYPE:-}
-version=${version:-}  # tcsh version
+PARENT_CMD=$(ps -p "${PPID}" -o comm=)
+PARENT_CMD=$(basename -- "${PARENT_CMD}" | tr -d '-')
+SHELL_TYPE="${SHELL_TYPE:-}"
+version="${version:-}"  # tcsh version
 
-if [[ "$SHELL_TYPE" == "csh" || "$SHELL_TYPE" == "tcsh" ]]; then
+if [[ "${SHELL_TYPE}" == "csh" || "${SHELL_TYPE}" == "tcsh" ]]; then
     DETECTED_SHELL="csh"
-elif [[ "$PARENT_CMD" == *"tcsh"* || "$PARENT_CMD" == *"csh"* ]]; then
+elif [[ "${PARENT_CMD}" == *"tcsh"* || "${PARENT_CMD}" == *"csh"* ]]; then
     DETECTED_SHELL="csh"
-elif [ -n "$version" ] && [[ "$version" == *"tcsh"* ]]; then
+elif [[ -n "${version}" ]] && [[ "${version}" == *"tcsh"* ]]; then
     DETECTED_SHELL="tcsh"
 else
     DETECTED_SHELL="sh"
 fi
 
 # Overridable
-OIDC_AGENT_SERVICE=${OIDC_AGENT_SERVICE:-oidc-agent-service}
+OIDC_AGENT_SERVICE="${OIDC_AGENT_SERVICE:-oidc-agent-service}"
 
 # Find oidc-agent dir
 # (SEE ALSO: oidc-agent-service)
-if [ -n "${OIDC_CONFIG_DIR:-}" ]; then
-    if [ ! -d "${OIDC_CONFIG_DIR}" ]; then
+if [[ -n "${OIDC_CONFIG_DIR:-}" ]]; then
+    if [[ ! -d "${OIDC_CONFIG_DIR}" ]]; then
         ERROR "${OIDC_CONFIG_DIR}: No such directory"
         exit 1
     fi
-    MY_OIDC_CONFIG_DIR=${OIDC_CONFIG_DIR}
+    MY_OIDC_CONFIG_DIR="${OIDC_CONFIG_DIR}"
 else
     MY_OIDC_CONFIG_DIR="${HOME}/.config/oidc-agent"
-    if [ ! -d "$MY_OIDC_CONFIG_DIR" ] && [ -d "${HOME}/.oidc-agent" ]; then
+    if [[ ! -d "${MY_OIDC_CONFIG_DIR}" ]] && [[ -d "${HOME}/.oidc-agent" ]]; then
         MY_OIDC_CONFIG_DIR="${HOME}/.oidc-agent"
     fi
 fi
@@ -43,10 +43,10 @@ mkdir -p "${MY_OIDC_CONFIG_DIR}/issuer.config.d/"
 
 # For oidc-agent v5
 check_and_link() {
-    local src="$1"
-    local dst="$2"
+    local src="${1}"
+    local dst="${2}"
 
-    if [ ! -e "$dst" ]; then
+    if [[ ! -e "${dst}" ]]; then
         INFO "Added to ${dst}"
     fi
     # Overwrite everytime
@@ -57,10 +57,10 @@ check_and_link "@pkgdatadir@/oidc-agent_hpci-sub.conf"  "${MY_OIDC_CONFIG_DIR}/i
 
 # For oidc-agent v4
 append_line_if_missing() {
-    local line="$1"
-    local file="$2"
+    local line="${1}"
+    local file="${2}"
 
-    if [ ! -e "${file}" ]; then
+    if [[ ! -e "${file}" ]]; then
         touch "${file}"
     fi
     if grep -qxF "${line}" "${file}"; then
@@ -93,23 +93,27 @@ OPERATION="${1:-}"
 DEBUG "OIDC_AGENT_OPTS=${OIDC_AGENT_OPTS}"
 export OIDC_AGENT_OPTS
 
-case "$DETECTED_SHELL" in
+case "${DETECTED_SHELL}" in
     csh )
-        case "$OPERATION" in
+        case "${OPERATION}" in
             stop | kill)
-                if [ -z "${OIDCD_PID_FILE:-}" ]; then
+                if [[ -z "${OIDCD_PID_FILE:-}" ]]; then
                     exit 0
                 fi
                 OIDCD_PID=$(cat "${OIDCD_PID_FILE}")
                 ;;
+            *)
+                ;;
         esac
         set +e
-        eval "$("${OIDC_AGENT_SERVICE}" "${@}")" >&2
-        ret=$?
-        if [ $ret -ne 0 ]; then
-            exit $ret
+        # Avoid SC2312 while maintaining eval functionality
+        OIDC_AGENT_SERVICE_OUT=$("${OIDC_AGENT_SERVICE}" "${@}")
+        eval "${OIDC_AGENT_SERVICE_OUT}" >&2
+        ret="${?}"
+        if [[ "${ret}" -ne 0 ]]; then
+            exit "${ret}"
         fi
-        case "$OPERATION" in
+        case "${OPERATION}" in
             use | start | restart | restart-s )
                 OIDCD_PID=$(cat "${OIDCD_PID_FILE}")
                 echo "setenv OIDC_SOCK ${OIDC_SOCK};"
@@ -122,8 +126,10 @@ case "$DETECTED_SHELL" in
                 echo "unsetenv OIDCD_PID;"
                 echo "unsetenv OIDCD_PID_FILE;"
                 ;;
+            *)
+                ;;
         esac
-        exit $ret
+        exit "${ret}"
         ;;
     * )
         #exec bash -x `which "${OIDC_AGENT_SERVICE}"` "${@}"
