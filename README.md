@@ -6,14 +6,16 @@ OAuth-based SSH client toolset for HPCI.
 
 The following tools are required for the scripts to function:
 
-- `OpenSSH`: Remote login tools with the SSH protocol.
+- `ssh` (OpenSSH): Remote login tools with the SSH protocol.
+- `sshpass`: Non-interactive SSH password provider.
 - `jq`: JSON processor.
 - `curl`: Tool for transferring data with URLs.
-- `sshpass`: Non-interactive SSH password provider.
-- `bash`: Version 5 or later.
-- `procps-ng` (procps): For process management (e.g., `ps`).
+- `bash` (Version 5 or later): For executing shell-scripts.
+- `ps` (procps-ng,procps): Display current processes.
 - `jwt-agent`: For managing JWT tokens.
+  - <https://github.com/oss-tsukuba/jwt-agent>
 - `oidc-agent` (optional): For managing JWT tokens and agent forwarding.
+  - <https://github.com/indigo-dc/oidc-agent>
 
 ## Installation
 
