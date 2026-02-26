@@ -58,6 +58,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Shellcheck
+        working-directory: ./
+        run: |
+          make syntax
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
@@ -88,11 +93,6 @@ jobs:
           # https://docs.docker.com/build/ci/github-actions/cache/#github-cache
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Shellcheck
-        working-directory: ./
-        run: |
-          make syntax
 
       - name: Test image
         working-directory: ./docker
