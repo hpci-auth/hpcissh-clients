@@ -28,6 +28,8 @@ CONTAINER_SHELL = /bin/bash
 LANG = ja_JP.UTF-8
 TZ = Asia/Tokyo
 
+DEBUG_X = yes
+
 DOCKER_INTERACTIVE := $(shell test -t 0 && echo "-it" || echo "-i")
 
 RUN_OPTS = $(DOCKER_INTERACTIVE)
@@ -69,7 +71,7 @@ define docker_run
 	-e CONTAINER_SHELL=$(CONTAINER_SHELL) \
 	-e LANG=$(LANG) \
 	-e TZ=$(TZ) \
-	-e DEBUG_X=yes \
+	-e DEBUG_X=$(DEBUG_X) \
 	$(IMAGE_NAME_FULL) $(2)
 endef
 
@@ -116,3 +118,8 @@ shell:
 .PHONY: test
 test:
 	$(call docker_run, --rm, /test-container.sh)
+
+.PHONY: help
+help: DEBUG_X = no
+help:
+	$(call docker_run, --rm, --help)

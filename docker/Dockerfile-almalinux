@@ -151,6 +151,7 @@ RUN . /tmp/env_webkit \
     syslog-ng \
     which \
     zsh \
+    tcsh \
     && dnf clean all
 
 # Copy all artifacts from builder
@@ -170,7 +171,7 @@ COPY docker/test-container.sh /test-container.sh
 ENV LANG=ja_JP.UTF-8 \
     TZ=Asia/Tokyo
 
-WORKDIR /root
+WORKDIR /
 USER root
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
 CMD ["__DEFAULT__"]

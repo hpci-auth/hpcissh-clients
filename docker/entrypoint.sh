@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eu -o pipefail
 
-if [ "${DEBUG_X:-}" = yes ]; then
+if [ "${DEBUG_X:-no}" = yes ]; then
     set -x
 fi
 
@@ -13,18 +13,34 @@ usage() {
     if [ -n "${1:-}" ]; then
         echo "Error: ${1:-} is required"
     fi
-    echo "Usage(example): podman(or docker) run -it --rm --name hpcissh \\"
-    echo "  --mount type=bind,src=\${HOME},dst=/HOST_HOMEDIR \\"
-    echo "  --env USER_UID=\$(id -u) \\"
-    echo "  --env USER_GID=\$(id -g) \\"
-    echo "  --env USER_NAME=\$(id -un)"
+    echo "Usage(example):"
+    echo "  podman run \\"
+    echo "    --userns=keep-id \\"
+    echo "    -it --rm --name hpcissh \\"
+    echo "    [ --mount type=bind,src=\${HOME},dst=/HOST_HOMEDIR ] \\"
+    echo "    [ --mount type=bind,src=/path/to/hpcissh_entrypoint.d,dst=/entrypoint.d ] \\"
+    echo "    --env USER_UID=\$(id -u) \\"
+    echo "    --env USER_GID=\$(id -g) \\"
+    echo "    --env USER_NAME=\$(id -un)"
+    echo "  (Note: '--userns=keep-id' is only for podman)"
     echo "Overridable variables for --env:"
-    echo "  MOUNT_HOST_HOME (default: /HOST_HOMEDIR)"
-    echo "  CONTAINER_HOME  (default: /home/\${USER_NAME}"
-    echo "  CONTAINER_SHELL (default: /bin/bash)"
-    echo "  LANG            (default: ja_JP.UTF-8)"
-    echo "  TZ              (default: Asia/Tokyo)"
+    echo "    MOUNT_HOST_HOME (default: /HOST_HOMEDIR)"
+    echo "    CONTAINER_HOME  (default: /home/\${USER_NAME}"
+    echo "    CONTAINER_SHELL (default: /bin/bash)"
+    echo "    LANG            (default: ja_JP.UTF-8)"
+    echo "    TZ              (default: Asia/Tokyo)"
+    echo "    DEBUG_X         (default: no)"
+    echo "For /entrypoint.d:"
+    echo "    *.envsh: Environment variables (export KEY=VAL)"
+    echo "    *.sh: Executable scripts"
 }
+
+case "$1" in
+    -h | --help | -\?)
+        usage
+        exit 0
+        ;;
+esac
 
 # Required
 [ -z "${USER_UID:-}" ] && usage USER_UID && exit 1
@@ -84,6 +100,10 @@ if [ ! -f $INITFILE ]; then
         mkdir -p "$CONTAINER_HOME"
         chown "$USER_UID:$USER_GID" "$CONTAINER_HOME"
         copy_skel "$USER_UID" "$USER_GID" "$CONTAINER_HOME"
+
+        # For tcsh
+        CSHRC="$CONTAINER_HOME"/.cshrc
+        echo 'set prompt = "%n@hpcissh %% "' > "$CSHRC"
     fi
 
     # For useradd warning: USERNAME's uid 501 outside of the UID_MIN 1000 and UID_MAX 60000 range.
@@ -115,13 +135,13 @@ if [ "$MOUNT_HOST_HOME" != "$CONTAINER_HOME" ]; then
     if [ -h "$SYMLNK_HOST_HOME" ]; then
         rm -f "$SYMLNK_HOST_HOME"
     fi
-    if [ ! -e "$SYMLNK_HOST_HOME" ]; then
+    if [ -d "$MOUNT_HOST_HOME" ] && [ ! -e "$SYMLNK_HOST_HOME" ]; then
         ln -s "$MOUNT_HOST_HOME" "$SYMLNK_HOST_HOME"
     fi
 fi
 
 if [ -d "$ENTRYPOINT_D" ]; then
-    for f in $(find $ENTRYPOINT_D -follow -type f -print | sort -V); do
+    for f in $(find $ENTRYPOINT_D -type f -print | sort -V); do
         epfile="$f"
         case "$f" in
             *.envsh)
