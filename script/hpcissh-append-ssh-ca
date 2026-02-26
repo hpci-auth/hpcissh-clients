@@ -1,7 +1,5 @@
 #!@bash_path@
 
-# shellcheck disable=SC2024
-
 set -eu
 
 CA_PUB_FILE="@pkgdatadir@/known_hosts-HPCI-SSH_CA.txt"
