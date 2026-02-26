@@ -92,6 +92,7 @@ jobs:
       - name: Test image
         working-directory: ./docker
         run: |
+          make syntax
           make test DOCKER_CMD=docker IMAGE_NAME_FULL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
 
       - name: Export digest

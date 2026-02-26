@@ -11,6 +11,6 @@ all build install uninstall test clean syntax:
 		echo "[=== Leaving directory: $$dir ===]"; \
 	done
 	@if [ "$@" = "syntax" ]; then \
-		echo "[=== Checking root scripts ===]"; \
 		shellcheck run-tests.sh || exit 1; \
+		shellcheck docker/entrypoint.sh || exit 1; \
 	fi
