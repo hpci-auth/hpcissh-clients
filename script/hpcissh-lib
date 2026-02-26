@@ -1,6 +1,7 @@
 #!@bash_path@
 
 set -eu -o pipefail
+shopt -s inherit_errexit
 
 VERSION="1.12.0 (2026-03-??)"
 

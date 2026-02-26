@@ -1,6 +1,7 @@
 #!@bash_path@
 
-set -eu
+set -eu -o pipefail
+shopt -s inherit_errexit
 
 source "${pkglibexecdir:-@pkglibexecdir@}"/hpcissh-lib
 
