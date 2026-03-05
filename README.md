@@ -21,7 +21,7 @@ The following tools are required for the scripts to function:
 
 ### Case 1: Using Container for Podman (or Docker)
 
-The easiest way to get started without manually installing all dependencies.
+This is the easiest way to get started without manually installing all dependencies.
 
 **Note**: Podman operates without requiring root privileges
 (rootless). In contrast, Docker typically runs with elevated
