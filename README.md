@@ -195,7 +195,7 @@ For macOS
 make build install prefix=$HOME/.local bash_path=$(brew --prefix)/bin/bash
 ```
 
-Note: `/bin/bash` is bash version 3
+Note: On macOS, `/bin/bash` is Bash version 3.
 
 **Apply PATH changes**: Add this to your `~/.bashrc` or `~/.zshrc`:
 
@@ -290,10 +290,14 @@ hpcissh REMOTE_USER@<HOSTNAME>
 
 ## Commands Summary
 
+- `hpcissh`: Secure Shell client for HPCI
 - `hpciscp`: Secure copy (scp compatible)
 - `hpcisftp`: Secure FTP (sftp compatible)
 - `hpcissh-config-show`: Display current configuration
+- `hpcissh-append-ssh-ca`: Manage SSH CA for HPCI
 - `hpcissh-version`: Show version info
+- `hpci-oidc-agent-service`: Service wrapper for oidc-agent
+- `oidc-sshconf-hpci`: Configure HPCI issuer profile for oidc-agent
 - `hpci-token`: Display current JWT
 - `hpci-parse-token`: Parse and display JWT claims
 - `hpci-get-userinfo`: Retrieve OIDC user information
