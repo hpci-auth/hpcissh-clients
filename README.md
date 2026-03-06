@@ -227,7 +227,7 @@ hpcissh-append-ssh-ca --user --update
 
 ### Issuer Profiles for oidc-agent
 
-The following files are managed automatically by `oidc-sshconf-hpci`:
+The following files are managed automatically by `hpci-oidc-agent-service`:
 
 - **For oidc-agent v4**: `~/.config/oidc-agent/pubclients.config`
 - **For oidc-agent v5**: `~/.config/oidc-agent/issuer.config.d/hpci-main` and `hpci-sub`
