@@ -62,12 +62,11 @@ if [[ -n "${OIDC_SOCK:-}" ]];
 then  # use oidc-agent
     if [[ "${OIDC_AGENT_FORWARD}" == "yes" ]];
     then
-        SUB_CLAIM=$(get_claim sub)
-
+        current_time=$(date +%s)
         # hpcissh have to forward oidc-agent's unix domain socket to /tmp
         # on remote host as ssh can't create a parent directory of
         # forwarded unix domain socket
-        REMOTE_OIDC_SOCK=$(mktemp -u /tmp/oidc-agent."${SUB_CLAIM}".XXXXXXXXXXXX.sock)
+        REMOTE_OIDC_SOCK=$(mktemp -u /tmp/oidc-agent."${current_time}".XXXXXXXXXXXX).sock
         SSH_OPTS+=("-R" "${REMOTE_OIDC_SOCK}:${OIDC_SOCK}")
         SSH_OPTS+=("-o" "SendEnv=OIDC_SOCK")
         OIDC_SOCK="${REMOTE_OIDC_SOCK}"
