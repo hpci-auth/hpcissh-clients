@@ -3,20 +3,20 @@ ARG OIDC_AGENT_VERSION=4.5.2
 ARG JWT_AGENT_VERSION=1.1.1
 
 # ----- Base Stage -----
-FROM almalinux:${ALMA_VERSION} AS base
+FROM almalinux:${ALMA_VERSION}-minimal AS base
 ARG ALMA_VERSION
 ARG OIDC_AGENT_VERSION
 ARG JWT_AGENT_VERSION
 
-RUN dnf update -y \
-    && dnf install -y epel-release \
+RUN microdnf update -y \
+    && microdnf install -y epel-release \
     && if [ "$ALMA_VERSION" = "10" ]; then \
         WEBKITGTK=webkit2gtk4.1; \
     else \
         WEBKITGTK=webkitgtk4; \
     fi \
     && echo "WEBKITGTK=${WEBKITGTK}" > /tmp/env_webkit \
-    && dnf install -y --enablerepo crb --setopt=install_weak_deps=False \
+    && microdnf install -y --enablerepo=crb --setopt=install_weak_deps=0 \
     # Common runtime libraries and utilities
     libsodium \
     libmicrohttpd \
@@ -26,7 +26,7 @@ RUN dnf update -y \
     jq \
     curl \
     tar \
-    && dnf clean all
+    && microdnf clean all
 
 # ----- Builder Stage -----
 FROM base AS builder
@@ -36,7 +36,7 @@ ARG JWT_AGENT_VERSION
 
 # Install build-time packages
 RUN . /tmp/env_webkit \
-    && dnf install -y --enablerepo crb --setopt=install_weak_deps=False \
+    && microdnf install -y --enablerepo=crb --setopt=install_weak_deps=0 \
     # To build jwt-agent
     git \
     golang \
@@ -57,7 +57,7 @@ RUN . /tmp/env_webkit \
     # To get gosu
     wget \
     gnupg2 \
-    && dnf clean all
+    && microdnf clean all
 
 WORKDIR /tmp
 
@@ -135,7 +135,7 @@ ARG JWT_AGENT_VERSION
 
 # Install final stage runtime packages
 RUN . /tmp/env_webkit \
-    && dnf install -y --enablerepo crb --setopt=install_weak_deps=False \
+    && microdnf install -y --enablerepo=crb --setopt=install_weak_deps=0 \
     # For hpcissh
     sshpass \
     # For oidc-agent
@@ -152,7 +152,7 @@ RUN . /tmp/env_webkit \
     which \
     zsh \
     tcsh \
-    && dnf clean all
+    && microdnf clean all
 
 # Copy all artifacts from builder
 COPY --from=builder /opt/hpcissh-clients /opt/hpcissh-clients
