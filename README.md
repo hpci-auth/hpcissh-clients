@@ -28,6 +28,8 @@ This is the easiest way to get started without manually installing all dependenc
 privileges. Please ensure you fully understand the security
 implications of these permissions before using Docker.
 
+**Disk Usage**: Using the container image consumes approximately 2 GB of disk space per user.
+
 #### Demo: Deploying with Podman
 
 ![demo-podman](./asciinema/podman.gif)
@@ -60,8 +62,6 @@ implications of these permissions before using Docker.
     - Run `sudo apt-get update && sudo apt-get -y install podman`
   - RHEL / RHEL-based (AlmaLinux / Rocky Linux / etc.):
     - Run `sudo dnf -y install podman`
-    - Run `sudo loginctl enable-linger <USERNAME_FOR_PODMAN>`
-      - Run this for all users who will be using Podman.
 
 For more details, refer to <https://podman.io/docs/installation>.
 
@@ -72,7 +72,8 @@ For more details, refer to <https://podman.io/docs/installation>.
 
     ```bash
     # Using Podman (recommended):
-    podman run --userns=keep-id \
+    podman run --userns=keep-id --replace \
+      --detach-keys="ctrl-^" \
       --rm -it --init --hostname hpcissh --name hpcissh \
       --mount type=bind,src=${HOME},dst=/HOST_HOMEDIR \
       -e USER_UID=$(id -u) \
@@ -84,6 +85,7 @@ For more details, refer to <https://podman.io/docs/installation>.
     ```bash
     # If using Docker:
     docker run \
+      --detach-keys="ctrl-^" \
       --rm -it --init --hostname hpcissh --name hpcissh \
       --mount type=bind,src=${HOME},dst=/HOST_HOMEDIR \
       -e USER_UID=$(id -u) \
@@ -94,7 +96,8 @@ For more details, refer to <https://podman.io/docs/installation>.
 
     ```powershell
     # If using Podman in Windows Powershell:
-    PS C:\Users\USERNAME> podman run --userns=keep-id `
+    PS C:\Users\USERNAME> podman run --userns=keep-id --replace `
+        --detach-keys="ctrl-^" `
         --rm -it --init --hostname hpcissh --name hpcissh `
         --mount type=bind,src=${HOME},dst=/HOST_HOMEDIR `
         -e USER_UID=1000 `
@@ -102,6 +105,8 @@ For more details, refer to <https://podman.io/docs/installation>.
         -e USER_NAME=USERNAME `
         ghcr.io/hpci-auth/hpcissh-almalinux10:latest
     ```
+
+    - **Troubleshooting**: If you encounter cgroup-related errors, try adding `--cgroup-manager=cgroupfs` to the `podman run` command.
 
 2. Follow the steps in [Using hpcissh](#using-hpcissh) inside the container.
 3. Type `exit` to quit. The container is automatically removed.

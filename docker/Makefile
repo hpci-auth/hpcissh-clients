@@ -33,15 +33,17 @@ DEBUG_X = yes
 DOCKER_INTERACTIVE := $(shell test -t 0 && echo "-it" || echo "-i")
 
 RUN_OPTS = $(DOCKER_INTERACTIVE)
+# common
+RUN_OPTS += --init
+RUN_OPTS += --hostname $(NAME)
+RUN_OPTS += --detach-keys="ctrl-^"
+
 ifeq ($(DOCKER_CMD_NAME),podman)
-  RUN_OPTS += --init
-  RUN_OPTS += --hostname $(NAME)
   RUN_OPTS += --userns=keep-id
+  RUN_OPTS += --replace
 endif
-ifeq ($(DOCKER_CMD_NAME),docker)
-  RUN_OPTS += --init
-  RUN_OPTS += --hostname $(NAME)
-endif
+# ifeq ($(DOCKER_CMD_NAME),docker)
+# endif
 
 BUILD_OPTS =
 ifneq ($(ALMA_VERSION),)
