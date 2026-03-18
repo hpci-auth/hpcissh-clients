@@ -40,9 +40,11 @@ implications of these permissions before using Docker.
   - Install WSL2
     - English : <https://learn.microsoft.com/en-us/windows/wsl/install>
     - Japanese: <https://learn.microsoft.com/ja-jp/windows/wsl/install>
+  - **Prerequisite**: Update to the latest WSL by running `wsl --update` in PowerShell, and then restart it with `wsl --shutdown`.
   - There are two ways to install Podman.
     - Please choose one of the following methods.
   - Option A: Install Podman within Ubuntu on WSL2
+    - **Important**: Ensure `systemd` is enabled in your WSL distribution's `/etc/wsl.conf` (`systemd=true` under `[boot]`) and restart WSL (`wsl --shutdown`). Without this, Podman may fail with errors like `mkdir /run/user/1000: permission denied`.
     - Run `sudo apt-get update && sudo apt-get -y install podman`
   - Option B: Download Podman Installer (Podman CLI for Windows) from <https://podman.io/>
     - Run the installer and follow the on-screen instructions.
@@ -107,6 +109,7 @@ For more details, refer to <https://podman.io/docs/installation>.
     ```
 
     - **Troubleshooting**: If you encounter cgroup-related errors, try adding `--cgroup-manager=cgroupfs` to the `podman run` command.
+    - **Note for WSL2**: You can safely ignore the warning message `WARN[0000] "/" is not a shared mount, this could cause issues or missing mounts with rootless containers`.
 
 2. Follow the steps in [Using hpcissh](#using-hpcissh) inside the container.
 3. Type `exit` to quit. The container is automatically removed.
