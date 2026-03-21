@@ -38,43 +38,71 @@ else
     fi
 fi
 
-# mkdir -p "${MY_OIDC_CONFIG_DIR}"
 mkdir -p "${MY_OIDC_CONFIG_DIR}/issuer.config.d/"
 
-# For oidc-agent v5
-check_and_link() {
-    local src="${1}"
-    local dst="${2}"
+# Detect oidc-agent major version
+# oidc-agent --version outputs e.g. "oidc-agent 5.3.4"
+_oidc_agent_version=$(oidc-agent --version 2>/dev/null | awk '{print $2}')
+_oidc_agent_major=$(echo "${_oidc_agent_version}" | cut -d. -f1)
+if [[ -z "${_oidc_agent_major}" ]]; then
+    DEBUG "Failed to detect oidc-agent version; applying both v4 and v5 configurations"
+else
+    DEBUG "oidc-agent version: ${_oidc_agent_version} (major: ${_oidc_agent_major})"
+fi
 
-    if [[ ! -e "${dst}" ]]; then
-        INFO "Added to ${dst}"
-    fi
-    # Overwrite everytime
-    ln -sf "${src}" "${dst}"
+# For oidc-agent v5+
+_setup_v5() {
+    check_and_copy() {
+        local src="${1}"
+        local dst="${2}"
+
+        if [[ -L "${dst}" ]]; then
+            ERROR "${dst}: is a symbolic link; remove it manually before proceeding"
+            exit 1
+        fi
+
+        if [[ ! -e "${dst}" ]] || ! cmp -s "${src}" "${dst}"; then
+            INFO "Copying ${src} to ${dst}"
+            cp "${src}" "${dst}"
+        else
+            DEBUG "No changes in ${dst}"
+        fi
+    }
+    check_and_copy "@pkgdatadir@/oidc-agent_hpci-main.conf" "${MY_OIDC_CONFIG_DIR}/issuer.config.d/hpci-main"
+    check_and_copy "@pkgdatadir@/oidc-agent_hpci-sub.conf"  "${MY_OIDC_CONFIG_DIR}/issuer.config.d/hpci-sub"
 }
-check_and_link "@pkgdatadir@/oidc-agent_hpci-main.conf" "${MY_OIDC_CONFIG_DIR}/issuer.config.d/hpci-main"
-check_and_link "@pkgdatadir@/oidc-agent_hpci-sub.conf"  "${MY_OIDC_CONFIG_DIR}/issuer.config.d/hpci-sub"
 
-# For oidc-agent v4
-append_line_if_missing() {
-    local line="${1}"
-    local file="${2}"
+# For oidc-agent v4 (and below)
+_setup_v4() {
+    append_line_if_missing() {
+        local line="${1}"
+        local file="${2}"
 
-    if [[ ! -e "${file}" ]]; then
-        touch "${file}"
-    fi
-    if grep -qxF "${line}" "${file}"; then
-        DEBUG "Already exists in ${file}: ${line}"
-    else
-        echo "${line}" >> "${file}"
-        INFO "Added to ${file}: ${line}"
-    fi
+        if [[ ! -e "${file}" ]]; then
+            touch "${file}"
+        fi
+        if grep -qxF "${line}" "${file}"; then
+            DEBUG "Already exists in ${file}: ${line}"
+        else
+            echo "${line}" >> "${file}"
+            INFO "Added to ${file}: ${line}"
+        fi
+    }
+    PUBCLIENTS_V4_HPCI="@pkgdatadir@/oidc-agent-v4_hpci-pubclients.config"
+    PUBCLIENTS_V4_CONFIG="${MY_OIDC_CONFIG_DIR}/pubclients.config"
+    while read -r line || [[ -n "${line}" ]]; do
+        append_line_if_missing "${line}" "${PUBCLIENTS_V4_CONFIG}"
+    done < "${PUBCLIENTS_V4_HPCI}"
 }
-PUBCLIENTS_V4_HPCI="@pkgdatadir@/oidc-agent-v4_hpci-pubclients.config"
-PUBCLIENTS_V4_CONFIG="${MY_OIDC_CONFIG_DIR}/pubclients.config"
-while read -r line || [[ -n "${line}" ]]; do
-    append_line_if_missing "${line}" "${PUBCLIENTS_V4_CONFIG}"
-done < "${PUBCLIENTS_V4_HPCI}"
+
+if [[ -z "${_oidc_agent_major}" ]]; then
+    _setup_v5
+    _setup_v4
+elif [[ "${_oidc_agent_major}" -ge 5 ]]; then
+    _setup_v5
+else
+    _setup_v4
+fi
 
 # (Example of OPERATION=use)
 # OIDC_SOCK=/var/folders/6d/dlm7c25j26l60wzvj58ndrmr0000gn/T//oidc-agent-service-501/oidc-agent.sock; export OIDC_SOCK;
