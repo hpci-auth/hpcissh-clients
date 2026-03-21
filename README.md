@@ -126,7 +126,7 @@ podman pull ghcr.io/hpci-auth/hpcissh-almalinux10:latest
 docker pull ghcr.io/hpci-auth/hpcissh-almalinux10:latest
 ```
 
-#### Building the Container image Locally
+#### (Advanced) Building and Customizing the Container Image Locally
 
 ```bash
 cd docker
@@ -136,6 +136,8 @@ podman build -f Dockerfile-almalinux -t hpcissh-almalinux10:localdev \
   --build-arg JWT_AGENT_VERSION=1.1.1 \
   ../
 ```
+
+The container image is kept minimal by design. To add extra packages, you can use `microdnf install <package>` inside the container and rebuild the image locally.
 
 ---
 
