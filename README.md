@@ -313,6 +313,26 @@ hpcissh <HOSTNAME>
 hpcissh REMOTE_USER@<HOSTNAME>
 ```
 
+To log out of the remote machine, run the `exit` command.
+
+### Note: Using `hpciscp` in the Container
+
+In the container-based setup, your host OS's home directory is mounted at `~/HOST_HOMEDIR/` inside the container. You can use this directory to transfer files between the remote server and your host machine.
+
+Example: To download `/path/to/myfile.txt` from the remote server to your host's `~/Downloads/myfile.txt`:
+
+```bash
+hpciscp <HOSTNAME>:/path/to/myfile.txt ~/HOST_HOMEDIR/Downloads/myfile.txt
+```
+
+Example: To upload `~/myfile.txt` from your host to the remote server's `/path/to/myfile.txt`:
+
+```bash
+hpciscp ~/HOST_HOMEDIR/myfile.txt <HOSTNAME>:/path/to/myfile.txt
+```
+
+**Warning**: Any files stored strictly within the container's internal filesystem are volatile and will be deleted automatically when the container exits. Always copy important data to `~/HOST_HOMEDIR/` for permanent storage.
+
 ---
 
 ## Commands Summary
