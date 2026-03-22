@@ -19,6 +19,12 @@ The following tools are required for the scripts to function:
 
 ## Installation
 
+Choose one of the following methods:
+
+- **[Case 1: Container](#case-1-using-container-for-podman-or-docker)** (Recommended): Use Podman or Docker. All dependencies are pre-installed.
+- **[Case 2: macOS Native](#case-2-macos-native-package-via-homebrew)**: Install natively on macOS using Homebrew.
+- **[Case 3: Manual Setup](#case-3-manual-setup)**: Build and install from source manually.
+
 ### Case 1: Using Container for Podman (or Docker)
 
 This is the easiest way to get started without manually installing all dependencies.
@@ -185,7 +191,7 @@ brew uninstall oidc-agent && brew untap indigo-dc/oidc-agent
 
 #### Manual Setup: System-wide Installation
 
-(Requires sudo)
+(Requires sudo; installs to `/usr/local` by default)
 
 ```bash
 make
@@ -262,11 +268,12 @@ Choose the agent that fits your workflow. **`jwt-agent` is recommended for most 
 
 #### Option A: Using `jwt-agent`
 
-1. Log in to the HPCI JWT server: [elpis (main-system)](https://elpis.hpci.nii.ac.jp) or [elpis-c (sub-system)](https://elpis-c.hpci.nii.ac.jp).
-2. Generate a JWT and copy the provided **passphrase**.
-3. Run `jwt-agent` and enter the **passphrase**.
-4. (Refer to "**Connect to a SSH Server**")
-5. (To stop): `jwt-agent --stop`
+1. Set `USE_JWT_AGENT=yes` (yes is default) in `~/.hpcissh`.
+2. Log in to the HPCI JWT server: [elpis (main-system)](https://elpis.hpci.nii.ac.jp) or [elpis-c (sub-system)](https://elpis-c.hpci.nii.ac.jp).
+3. Generate a JWT and copy the provided **command line** and **passphrase** to your clipboard.
+4. Run `jwt-agent -s <JWT_SERVER_URL> -l <USER_NAME>` and enter the **passphrase**.
+5. (Refer to [Step 2: Connect to a SSH Server](#step-2-connect-to-a-ssh-server))
+6. (To stop): Run `jwt-agent --stop`
 
 ![demo-jwtagent](./asciinema/jwtagent.gif)
 
@@ -274,7 +281,12 @@ Choose the agent that fits your workflow. **`jwt-agent` is recommended for most 
 
 1. Set `USE_JWT_AGENT=no` in `~/.hpcissh`.
 2. (Optional) To use sub-system: Set `OIDC_ISSUER="https://metis-c.hpci.nii.ac.jp/auth/realms/HPCI"` in `~/.hpcissh`.
-3. Starting agent: Run `eval $(oidc-agent-service use)`
+3. Starting agent: Run the following command to start oidc-agent and set environment variables.
+
+    ```bash
+    eval `hpci-oidc-agent-service use`
+    ```
+
 4. Run `oidc-sshconf-hpci` and follow browser prompts.
     - Enter encryption password
     - Open URL in Web browser
@@ -282,8 +294,12 @@ Choose the agent that fits your workflow. **`jwt-agent` is recommended for most 
     - Select your shibboleth IdP
     - Login your shibboleth IdP
     - Enter the One-time code
-5. (Refer to "**Connect to a SSH Server**")
-6. (To stop): `eval $(oidc-agent-service stop)`
+5. (Refer to [Step 2: Connect to a SSH Server](#step-2-connect-to-a-ssh-server))
+6. (To stop): Run the following command to stop oidc-agent and unset environment variables.
+
+    ```bash
+    eval `hpci-oidc-agent-service stop`
+    ```
 
 ![demo-oidcagent](./asciinema/oidcagent.gif)
 
@@ -345,19 +361,40 @@ Customize via environment variables or `~/.hpcissh`. Run `hpcissh-config-show` t
 
 ### Testing
 
-Offline testing:
+#### Offline testing
 
 ```bash
+# For Linux:
 make build install test clean uninstall prefix=$(pwd)/LOCAL
+
+# For macOS:
+make build install test clean uninstall prefix=$(pwd)/LOCAL bash_path=$(brew --prefix)/bin/bash
 ```
 
-Online testing (requires active agents):
+#### Online testing (requires active agents)
 
 ```bash
-# - (Run jwt-agent and oidc-agent before testing)
+# (Run jwt-agent and oidc-agent before testing)
+# jwt-agent ...
+# eval `oidc-agent-service use`
+# ...
 
+# Prepare or Linux:
 make build install prefix=$(pwd)/LOCAL
+
+# Prepare for macOS:
+make build install prefix=$(pwd)/LOCAL bash_path=$(brew --prefix)/bin/bash
+
+# Run tests
 ./run-tests.sh --prefix $(pwd)/LOCAL <TARGET_HOSTNAME>
+```
+
+#### Container testing
+
+```bash
+cd docker
+make build
+make test
 ```
 
 ### GitHub Actions
