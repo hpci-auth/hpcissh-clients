@@ -317,7 +317,7 @@ hpciscp ~/HOST_HOMEDIR/myfile.txt <HOSTNAME>:/path/to/myfile.txt
 
 ### Note: Post-Quantum Key Exchange Warning
 
-When connecting via `hpcissh`, you may encounter the following warning:
+You may see the following warning when using the `hpcissh` command:
 
 ```text
 ** WARNING: connection is not using a post-quantum key exchange algorithm.
