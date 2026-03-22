@@ -151,6 +151,9 @@ RUN . /tmp/env_webkit \
     sudo \
     syslog-ng \
     which \
+    vim-minimal \
+    less \
+    man \
     zsh \
     tcsh \
     && microdnf clean all
