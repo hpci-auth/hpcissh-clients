@@ -3,7 +3,7 @@
 set -eu -o pipefail
 shopt -s inherit_errexit
 
-VERSION="1.12.0 (2026-03-??)"
+VERSION="1.12.0 (2026-04-??)"
 
 CA_PUB_FILE="@pkgdatadir@/known_hosts-HPCI-SSH_CA.txt"
 CAT_CMD="${CAT_CMD:-/bin/cat}"

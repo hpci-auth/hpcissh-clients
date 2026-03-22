@@ -59,6 +59,7 @@ implications of these permissions before using Docker.
   - Option B: Download Podman Installer (Podman CLI for macOS) from <https://podman.io/>
     - Run the installer and follow the on-screen instructions.
     - Run `podman machine init && podman machine start`
+  - **Time Sync (macOS)**: If `oidc-agent` fails after sleep, the `podman machine` time might be out of sync. To fix it, run `podman machine ssh sudo chronyc -a makestep`. (Known issue: [#27293](https://github.com/containers/podman/issues/27293))
 - **Linux Distributions**: Install Podman via the package manager
   - Debian / Ubuntu:
     - Run `sudo apt-get update && sudo apt-get -y install podman`
