@@ -65,7 +65,7 @@ implications of these permissions before using Docker.
   - Option B: Download Podman Installer (Podman CLI for macOS) from <https://podman.io/>
     - Run the installer and follow the on-screen instructions.
     - Run `podman machine init && podman machine start`
-  - **Time Sync (macOS)**: If `oidc-agent` fails after sleep, the `podman machine` time might be out of sync. To fix it, run `podman machine ssh sudo chronyc -a makestep`. (Known issue: [#27293](https://github.com/containers/podman/issues/27293))
+  - **Time Sync (macOS)**: If `oidc-agent` fails after waking from sleep, the `podman machine` time might be out of sync. To fix it, run `podman machine ssh sudo chronyc -a makestep`. (Known issue: [#27293](https://github.com/containers/podman/issues/27293))
 - **Linux Distributions**: Install Podman via the package manager
   - Debian / Ubuntu:
     - Run `sudo apt-get update && sudo apt-get -y install podman`
@@ -224,33 +224,6 @@ To apply immediately, run `export PATH="$HOME/.local/bin:$PATH"`
 
 ---
 
-## Configurations
-
-**No changes needed** for default settings.
-
-### SSH CA (Public Key) for HPCI
-
-`hpcissh` command automatically uses the public key of the SSH CA for HPCI to verify SSH servers. Manual setup is **NOT required** unless `HPCISSH_AUTO_KNOWN_HOSTS=no` is set.
-
-To manually update:
-
-```bash
-# System-wide
-sudo hpcissh-append-ssh-ca --system --update
-
-# User-specific
-hpcissh-append-ssh-ca --user --update
-```
-
-### Issuer Profiles for oidc-agent
-
-The following files are managed automatically by `hpci-oidc-agent-service`:
-
-- **For oidc-agent v4**: `~/.config/oidc-agent/pubclients.config`
-- **For oidc-agent v5**: `~/.config/oidc-agent/issuer.config.d/hpci-main` and `hpci-sub`
-
----
-
 ## Using hpcissh
 
 ### Step 1: Obtain an Access Token
@@ -315,6 +288,8 @@ hpcissh REMOTE_USER@<HOSTNAME>
 
 To log out of the remote machine, run the `exit` command.
 
+If you have jwt-agent or oidc-agent running, you can also use hpciscp and hpcisftp. The usage is exactly the same as standard scp and sftp.
+
 ### Note: Using `hpciscp` in the Container
 
 In the container-based setup, your host OS's home directory is mounted at `~/HOST_HOMEDIR/` inside the container. You can use this directory to transfer files between the remote server and your host machine.
@@ -333,9 +308,7 @@ hpciscp ~/HOST_HOMEDIR/myfile.txt <HOSTNAME>:/path/to/myfile.txt
 
 **Warning**: Any files stored strictly within the container's internal filesystem are volatile and will be deleted automatically when the container exits. Always copy important data to `~/HOST_HOMEDIR/` for permanent storage.
 
----
-
-## Commands Summary
+### Commands Summary
 
 - `hpcissh`: Secure Shell client for HPCI
 - `hpciscp`: Secure copy (scp compatible)
@@ -351,7 +324,9 @@ hpciscp ~/HOST_HOMEDIR/myfile.txt <HOSTNAME>:/path/to/myfile.txt
 
 ---
 
-## Configurable Parameters
+## Configurations
+
+### Configurable Parameters for hpcissh and related commands
 
 Customize via environment variables or `~/.hpcissh`. Run `hpcissh-config-show` to display the current effective values.
 
@@ -375,6 +350,31 @@ Customize via environment variables or `~/.hpcissh`. Run `hpcissh-config-show` t
 | `OIDC_USERINFO_ENDPOINT` | Full URL for the userinfo endpoint. If this value is set,  OIDC_USERINFO_ENDPOINT_PATH is ignored (Default: `<empty string>`: automatically retrieved from the access token) |
 | `OIDC_USERINFO_ENDPOINT_PATH` | Path to the userinfo endpoint (`/protocol/openid-connect/userinfo`) |
 
+### SSH CA (Public Key) for HPCI
+
+**No changes needed** for default settings.
+
+`hpcissh` command automatically uses the public key of the SSH CA for HPCI to verify SSH servers. Manual setup is **NOT required** unless `HPCISSH_AUTO_KNOWN_HOSTS=no` is set.
+
+To manually update:
+
+```bash
+# System-wide
+sudo hpcissh-append-ssh-ca --system --update
+
+# User-specific
+hpcissh-append-ssh-ca --user --update
+```
+
+### Issuer Profiles for oidc-agent
+
+**No changes needed** for default settings.
+
+The following files are managed automatically by `hpci-oidc-agent-service`:
+
+- **For oidc-agent v4**: `~/.config/oidc-agent/pubclients.config`
+- **For oidc-agent v5**: `~/.config/oidc-agent/issuer.config.d/hpci-main` and `hpci-sub`
+
 ---
 
 ## For Developers
@@ -396,7 +396,7 @@ make build install test clean uninstall prefix=$(pwd)/LOCAL bash_path=$(brew --p
 ```bash
 # (Run jwt-agent and oidc-agent before testing)
 # jwt-agent ...
-# eval `oidc-agent-service use`
+# eval `hpci-oidc-agent-service use`
 # ...
 
 # Prepare or Linux:
