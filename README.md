@@ -6,7 +6,7 @@ OAuth-based SSH client toolset for HPCI.
 
 The following tools are required for the scripts to function:
 
-- `ssh` (OpenSSH): Remote login tools with the SSH protocol.
+- `ssh` (OpenSSH): Standard remote login tool using the SSH protocol.
 - `sshpass`: Non-interactive SSH password provider.
 - `jq`: JSON processor.
 - `curl`: Tool for transferring data with URLs.
@@ -59,7 +59,9 @@ implications of these permissions before using Docker.
   - There are two ways to install Podman.
     - Please choose one of the following methods.
   - Option A: Install Podman via Homebrew
-    1. Install Homebrew: <https://brew.sh/>
+    1. Install Homebrew:
+        - <https://brew.sh/>
+        - macOS Requirements: <https://docs.brew.sh/Installation>
     2. Run `brew install podman`
     3. Run `podman machine init && podman machine start`
   - Option B: Download Podman Installer (Podman CLI for macOS) from <https://podman.io/>
@@ -156,7 +158,9 @@ The container image is kept minimal by design. To add extra packages, you can us
 
 #### Installing hpcissh for macOS
 
-1. **Install Homebrew**: <https://brew.sh/>
+1. **Install Homebrew**:
+    - <https://brew.sh/>
+    - macOS Requirements: <https://docs.brew.sh/Installation>
 2. **Install hpcissh**:
 
     ```bash
@@ -206,13 +210,16 @@ sudo make install
 make build install prefix=$HOME/.local
 ```
 
-For macOS
+For macOS:
+
+1. **Install Homebrew** and install bash 5 or later
+2. **Install hpcissh**
 
 ```bash
 make build install prefix=$HOME/.local bash_path=$(brew --prefix)/bin/bash
 ```
 
-Note: On macOS, `/bin/bash` is Bash version 3.
+Note: On macOS, the default `/bin/bash` is version 3. Since the scripts require Bash version 5 or later, you must specify the path to a newer Bash version (e.g., installed via Homebrew) using the `bash_path` parameter.
 
 **Apply PATH changes**: Add this to your `~/.bashrc` or `~/.zshrc`:
 
@@ -241,9 +248,9 @@ Choose the agent that fits your workflow. **`jwt-agent` is recommended for most 
 
 #### Option A: Using `jwt-agent`
 
-1. Set `USE_JWT_AGENT=yes` (yes is default) in `~/.hpcissh`.
+1. Set `USE_JWT_AGENT=yes` (`yes` is the default) in `~/.hpcissh`.
 2. Log in to the HPCI JWT server: [elpis (main-system)](https://elpis.hpci.nii.ac.jp) or [elpis-c (sub-system)](https://elpis-c.hpci.nii.ac.jp).
-3. Generate a JWT and copy the provided **command line** and **passphrase** to your clipboard.
+3. Generate a JWT and copy the provided **command line for jwt-agent** and **passphrase** to your clipboard.
 4. Run `jwt-agent -s <JWT_SERVER_URL> -l <USER_NAME>` and enter the **passphrase**.
 5. (Refer to [Step 2: Connect to a SSH Server](#step-2-connect-to-a-ssh-server))
 6. (To stop): Run `jwt-agent --stop`
@@ -320,7 +327,7 @@ hpciscp ~/HOST_HOMEDIR/myfile.txt <HOSTNAME>:/path/to/myfile.txt
 - `oidc-sshconf-hpci`: Configure HPCI issuer profile for oidc-agent
 - `hpci-token`: Display current JWT
 - `hpci-parse-token`: Parse and display JWT claims
-- `hpci-get-userinfo`: Retrieve OIDC user information
+- `hpci-get-userinfo`: Retrieve OIDC user information from the server
 
 ---
 
@@ -397,9 +404,10 @@ make build install test clean uninstall prefix=$(pwd)/LOCAL bash_path=$(brew --p
 # (Run jwt-agent and oidc-agent before testing)
 # jwt-agent ...
 # eval `hpci-oidc-agent-service use`
+# oidc-sshconf-hpci
 # ...
 
-# Prepare or Linux:
+# Prepare for Linux:
 make build install prefix=$(pwd)/LOCAL
 
 # Prepare for macOS:
