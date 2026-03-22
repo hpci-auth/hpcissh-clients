@@ -327,7 +327,7 @@ When connecting via `hpcissh`, you may encounter the following warning:
 
 This is a precautionary message from your SSH client (on your local PC) indicating that the remote server has not yet adopted post-quantum key exchange algorithms. It highlights potential long-term risks but does **not** imply an immediate security compromise of your current connection.
 
-The warning will be resolved as servers are upgraded to support these newer standards. No configuration changes are required on your part; you can **safely** ignore this message for now and continue using the service.
+There are no immediate security concerns. This warning will be resolved as servers are upgraded to support newer standards. No action or configuration changes are required on your part. You may proceed with the connection as usual, even if this message appears.
 
 ### Commands Summary
 
