@@ -315,6 +315,20 @@ hpciscp ~/HOST_HOMEDIR/myfile.txt <HOSTNAME>:/path/to/myfile.txt
 
 **Warning**: Any files stored strictly within the container's internal filesystem are volatile and will be deleted automatically when the container exits. Always copy important data to `~/HOST_HOMEDIR/` for permanent storage.
 
+### Note: Post-Quantum Key Exchange Warning
+
+When connecting via `hpcissh`, you may encounter the following warning:
+
+```text
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+```
+
+This is a precautionary message from your SSH client (on your local PC) indicating that the remote server has not yet adopted post-quantum key exchange algorithms. It highlights potential long-term risks (specifically "harvest-now-decrypt-later" scenarios) but does **not** imply an immediate security compromise of your current connection.
+
+The warning will be resolved as servers are upgraded to support these newer standards. No configuration changes are required on your part; you can safely ignore this message for now and continue using the service.
+
 ### Commands Summary
 
 - `hpcissh`: Secure Shell client for HPCI
@@ -415,6 +429,7 @@ make build install prefix=$(pwd)/LOCAL bash_path=$(brew --prefix)/bin/bash
 
 # Run tests
 ./run-tests.sh --prefix $(pwd)/LOCAL <TARGET_HOSTNAME>
+./run-tests.sh --prefix $(pwd)/LOCAL <TARGET_HOSTNAME> --run
 ```
 
 #### Container testing
