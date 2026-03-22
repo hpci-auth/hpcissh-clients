@@ -325,9 +325,9 @@ When connecting via `hpcissh`, you may encounter the following warning:
 ** The server may need to be upgraded. See https://openssh.com/pq.html
 ```
 
-This is a precautionary message from your SSH client (on your local PC) indicating that the remote server has not yet adopted post-quantum key exchange algorithms. It highlights potential long-term risks (specifically "harvest-now-decrypt-later" scenarios) but does **not** imply an immediate security compromise of your current connection.
+This is a precautionary message from your SSH client (on your local PC) indicating that the remote server has not yet adopted post-quantum key exchange algorithms. It highlights potential long-term risks but does **not** imply an immediate security compromise of your current connection.
 
-The warning will be resolved as servers are upgraded to support these newer standards. No configuration changes are required on your part; you can safely ignore this message for now and continue using the service.
+The warning will be resolved as servers are upgraded to support these newer standards. No configuration changes are required on your part; you can **safely** ignore this message for now and continue using the service.
 
 ### Commands Summary
 
