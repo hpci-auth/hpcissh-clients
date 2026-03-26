@@ -447,3 +447,7 @@ make test
 - CI Testing:
   - Pushes to any other branches trigger tests only (no image generation).
   - Tests are automatically executed for all pull requests.
+
+### Homebrew tap
+
+- See <https://github.com/hpci-auth/homebrew-tap>
