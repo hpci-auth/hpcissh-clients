@@ -139,20 +139,21 @@ RUN . /tmp/env_webkit \
     && microdnf install -y --enablerepo=crb --setopt=install_weak_deps=0 \
     # For hpcissh
     sshpass \
+    openssh-clients \
     # For oidc-agent
     procps-ng \
-    # Common
+    # For jwt-agent
+    syslog-ng \
+    # Useful packages
     glibc-langpack-en \
     glibc-langpack-ja \
     glibc-locale-source \
-    initscripts-service \
-    openssh-clients \
     rsync \
     sudo \
-    syslog-ng \
     which \
     vim-minimal \
     less \
+    openssl \
     man \
     zsh \
     tcsh \
@@ -171,6 +172,7 @@ RUN echo "/opt/oidc-agent/usr/lib/x86_64-linux-gnu" > /etc/ld.so.conf.d/oidc-age
 COPY docker/syslog-ng.conf /etc/syslog-ng/hpci-syslog-ng.conf
 COPY docker/entrypoint.sh /entrypoint.sh
 COPY docker/test-container.sh /test-container.sh
+COPY run-tests.sh /opt/run-tests-hpcissh.sh
 
 ENV LANG=ja_JP.UTF-8 \
     TZ=Asia/Tokyo
