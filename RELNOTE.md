@@ -1,6 +1,6 @@
 # Release note for hpcissh-clients
 
-## version 1.12.0 (2026-02-??)
+## version 1.12.0 (2026-04-??)
 
 - New feature
   - container image for Podman
@@ -8,6 +8,8 @@
 - Update feature
   - automatically use HPCI SSH CA (no need to edit the known_hosts file anymore)
   - By using hpci-oidc-agent-service, HPCI configurations for oidc-agent is added automatically
+  - revise the error messages and suggested re-login commands for expired refresh token to ensure re-authentication works across all supported environments
+  - fallback to oidc-agent automatically when the jwt-agent token is expired
   - suppress oidc-prompt (GUI popup) for oidc-agent
   - change installer (make && make install)
 - New command

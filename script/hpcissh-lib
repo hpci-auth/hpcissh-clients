@@ -54,8 +54,18 @@ FATAL() {
     exit 1
 }
 
+run_quiet() {
+    if [[ "${HPCISSH_DEBUG}" = "yes" ]]; then
+        "$@"
+    else
+        "$@" 2> /dev/null
+    fi
+    return $?
+}
+
 _get_token() {
     local CHECK_EXPIRED="${1}"
+    unset OIDC_AT_DECODED 2> /dev/null || :
 
     # global
     OIDC_AT="${OIDC_AT:-}"
@@ -67,6 +77,8 @@ _get_token() {
     # SEE ALSO:
     # http://oss-tsukuba.org/gfarm/share/doc/gfarm/html/en/user/auth-sasl.html
     # ex. /tmp/jwt_user_u1000/token.jwt
+
+    OIDC_AT_JWT_AGENT=""
 
     # shellcheck disable=SC2154
     : "${USE_JWT_AGENT}"
@@ -87,18 +99,37 @@ _get_token() {
                 OIDC_AT=$(cat "${token_file}")
             fi
         fi
+        if [[ -n "${OIDC_AT}" ]]; then
+            # global
+            OIDC_AT_DECODED=$(decode_jwt | jq .)
+            # shellcheck disable=SC2310
+            if is_jwt_expired; then
+                OIDC_AT_JWT_AGENT="${OIDC_AT}"
+                OIDC_AT=""  # To use oidc-agent
+            fi
+        fi
     fi
     if [[ -z "${OIDC_AT}" ]] && [[ -n "${OIDC_SOCK:-}" ]]; then  # use oidc-agent
         # shellcheck disable=SC2154
         : "${OIDC_AT_LEAST_VALID_TIME}"
         # shellcheck disable=SC2154
         : "${OIDC_AGENT_CONF_NAME}"
-        if OIDC_AT=$(oidc-token -t "${OIDC_AT_LEAST_VALID_TIME}" "${OIDC_AGENT_CONF_NAME}"); then
+
+        # shellcheck disable=SC2310
+        if OIDC_AT=$(run_quiet oidc-token -t "${OIDC_AT_LEAST_VALID_TIME}" "${OIDC_AGENT_CONF_NAME}"); then
             DEBUG "OIDC_AT: use oidc-token command"
         else
-            ERROR "'oidc-token ${OIDC_AGENT_CONF_NAME}' failed"
+            ERROR "'oidc-token ${OIDC_AGENT_CONF_NAME}' failed (Invalid or expired refresh token)"
+            INFO "Run the following commands to log in again:"
+            INFO "    $ oidc-gen -d ${OIDC_AGENT_CONF_NAME}"
+            INFO "    $ oidc-sshconf-hpci"
             return 1  # error
         fi
+    fi
+
+    if [[ -z "${OIDC_AT}" ]]; then
+       # Set expired token from jwt-agent
+       OIDC_AT="${OIDC_AT_JWT_AGENT}"
     fi
     if [[ -z "${OIDC_AT}" ]]; then
         ERROR "Access token cannot be found. jwt-agent or oidc-agent is required."

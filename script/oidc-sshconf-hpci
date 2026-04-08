@@ -13,7 +13,7 @@ AUDIENCE="hpci"
 
 if [[ "${#}" -eq 0 ]];
 then
-    CONF_NAME="hpci"
+    CONF_NAME="${OIDC_AGENT_CONF_NAME}"
 else
     CONF_NAME="${1}"
 fi
