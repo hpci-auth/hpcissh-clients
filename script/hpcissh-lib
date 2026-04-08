@@ -568,11 +568,11 @@ load_conf() {
         set -e
         if [[ "${RESULT}" -ne 0 ]]; then
             set_OIDC_ENCRYPTION_PW no
-            local OPT_PW_ENV=""
+            local OIDC_ADD_OPTS=()
             if [[ -n "${OIDC_ENCRYPTION_PW:-}" ]]; then
-                OPT_PW_ENV="--pw-env"
+                OIDC_ADD_OPTS+=("--pw-env")
             fi
-            oidc-add "${OPT_PW_ENV}" "${CONF_NAME}"
+            oidc-add "${OIDC_ADD_OPTS[@]}" "${CONF_NAME}"
         else
             # The account configuration is already loaded
             get_token_ignore_expired
@@ -582,12 +582,12 @@ load_conf() {
         fi
     else
         set_OIDC_ENCRYPTION_PW yes
-        local OPT_PW_ENV=""
+        local OIDC_ADD_OPTS=()
         if [[ -n "${OIDC_ENCRYPTION_PW:-}" ]]; then
-            OPT_PW_ENV="--pw-env"
+            OIDC_ADD_OPTS+=("--pw-env")
         fi
         oidc-gen --pub \
-            "${OPT_PW_ENV}" \
+            "${OIDC_ADD_OPTS[@]}" \
             -w device \
             --issuer="${ISSUER}" \
             --scope="${SCOPES}" \
