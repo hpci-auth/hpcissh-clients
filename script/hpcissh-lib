@@ -75,7 +75,8 @@ _get_token() {
     fi
 
     # SEE ALSO:
-    # http://oss-tsukuba.org/gfarm/share/doc/gfarm/html/en/user/auth-sasl.html
+    #   https://github.com/oss-tsukuba/jwt-agent
+    #   https://oss-tsukuba.org/share/doc/gfarm/html/ja/user/auth-sasl.html
     # ex. /tmp/jwt_user_u1000/token.jwt
 
     OIDC_AT_JWT_AGENT=""
