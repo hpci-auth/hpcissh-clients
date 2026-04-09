@@ -140,6 +140,7 @@ RUN . /tmp/env_webkit \
     # For hpcissh
     sshpass \
     openssh-clients \
+    ncurses \
     # For oidc-agent
     procps-ng \
     # For jwt-agent

@@ -555,6 +555,7 @@ set_OIDC_ENCRYPTION_PW() {
     if [[ "${OIDC_AGENT_USE_PW_ENV}" != "yes" ]]; then
         return
     fi
+    # tput is included in the ncurses package
     if type tput &> /dev/null; then
         RED=$(tput setaf 1)
         CYAN=$(tput setaf 6)
