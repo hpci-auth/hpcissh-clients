@@ -401,7 +401,7 @@ Customize via environment variables or `~/.hpcissh`. Run `hpcissh-config-show` t
 | `HPCISSH_TOKEN_INPUT` | Token input method: `sshpass` or `SSH_ASKPASS` (`sshpass`) |
 | `OIDC_ISSUER` | OpenID Connect issuer URL for `oidc-agent` (`https://metis.hpci.nii.ac.jp/auth/realms/HPCI`) |
 | `OIDC_AGENT_FORWARD` | Enable `oidc-agent` forwarding (`yes`) |
-| `OIDC_AGENT_OPTS` | Options for `oidc-agent` via `hpci-oidc-agent-service` (`--no-autoreauthenticate`) |
+| `OIDC_AGENT_OPTS` | Options for `oidc-agent` via `hpci-oidc-agent-service` (`--no-autoreauthenticate --no-autoload`) |
 | `OIDC_AGENT_CONF_NAME` | Account config name for `oidc-agent` (`hpci`) |
 | `OIDC_AGENT_USE_PW_ENV` | Use `--pw-env` for `oidc-gen` and `oidc-add` to suppress GUI popup for `oidc-agent` on Desktop environment (`yes`) |
 | `OIDC_AT_LEAST_VALID_TIME` | Min validity required for access token for `oidc-agent` (`180` sec.) |

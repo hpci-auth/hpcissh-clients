@@ -54,13 +54,23 @@ FATAL() {
     exit 1
 }
 
+print_message_expired_refresh_token() {
+    ERROR "(Expired or invalid refresh token)"
+    INFO "Run the following commands to log in again:"
+    INFO "    $ oidc-sshconf-hpci"
+}
+
 run_quiet() {
+    local rv=0
     if [[ "${HPCISSH_DEBUG}" = "yes" ]]; then
-        "$@"
+        "$@" || rv=$?
     else
-        "$@" 2> /dev/null
+        "$@" 2> /dev/null || rv=$?
     fi
-    return $?
+    if [[ ${rv} -ne 0 ]]; then
+        ERROR "Command failed (exit ${rv}): '$*'"
+    fi
+    return "${rv}"
 }
 
 _get_token() {
@@ -120,10 +130,7 @@ _get_token() {
         if OIDC_AT=$(run_quiet oidc-token -t "${OIDC_AT_LEAST_VALID_TIME}" "${OIDC_AGENT_CONF_NAME}"); then
             DEBUG "OIDC_AT: use oidc-token command"
         else
-            ERROR "'oidc-token ${OIDC_AGENT_CONF_NAME}' failed (Invalid or expired refresh token)"
-            INFO "Run the following commands to log in again:"
-            INFO "    $ oidc-gen -d ${OIDC_AGENT_CONF_NAME}"
-            INFO "    $ oidc-sshconf-hpci"
+            print_message_expired_refresh_token
             return 1  # error
         fi
     fi
@@ -321,7 +328,7 @@ load_common_config() {
     # (Call set_param() to display the parameters by hpci-config-show)
     #
     # For oidc-agent
-    set_param OIDC_AGENT_OPTS "--no-autoreauthenticate"
+    set_param OIDC_AGENT_OPTS "--no-autoreauthenticate --no-autoload"
     # https://indigo-dc.gitbook.io/oidc-agent/configuration/directory
     set_param OIDC_CONFIG_DIR "${OIDC_CONFIG_DIR:-}"
     set_param OIDC_SOCK "${OIDC_SOCK:-}"
@@ -543,10 +550,11 @@ get_local_account() {
 
 # To suppress oidc-prompt (GUI popup) for oidc-agent
 set_OIDC_ENCRYPTION_PW() {
+    local confirm="${1}"  # yes...Encryption
+
     if [[ "${OIDC_AGENT_USE_PW_ENV}" != "yes" ]]; then
         return
     fi
-    local confirm="${1}"  # yes...Encryption
     if type tput &> /dev/null; then
         RED=$(tput setaf 1)
         CYAN=$(tput setaf 6)
@@ -574,7 +582,7 @@ set_OIDC_ENCRYPTION_PW() {
         fi
         echo "${RED}Encryption passwords did not match.${RESET}"
     done
-    # for "--pw-env" option of oidc-gen and oidc-add
+    # For "--pw-env" option of oidc-gen and oidc-add
     export OIDC_ENCRYPTION_PW
 }
 
@@ -589,37 +597,74 @@ load_conf() {
     local AUDIENCE="${3}"
     local CONF_NAME="${4}"
 
+    # For oidc-agent
+    USE_JWT_AGENT="no"
+
     set +e
     oidc-add -l | grep -E "^${CONF_NAME}$" > /dev/null
     local RESULT="${?}"
     set -e
+    local run_oidc_gen="yes"
+    local oidc_gen_reauthenticate="no"
     if [[ "${RESULT}" -eq 0 ]]; then
+        # The account configuration file is found in ~/.config/oidc-agent/
         set +e
         oidc-add -a | grep -E "^${CONF_NAME}$" > /dev/null
         RESULT="${?}"
         set -e
         if [[ "${RESULT}" -ne 0 ]]; then
+            # The account configuration is not loaded
             set_OIDC_ENCRYPTION_PW no
             local OIDC_ADD_OPTS=()
+            local rv=1
             if [[ -n "${OIDC_ENCRYPTION_PW:-}" ]]; then
                 OIDC_ADD_OPTS+=("--pw-env")
+                set +e
+                # Disable password prompts in oidc-add commands.
+                run_quiet oidc-add "${OIDC_ADD_OPTS[@]}" "${CONF_NAME}" < /dev/null
+                rv=$?
+                set -e
+            else
+                set +e
+                oidc-add "${OIDC_ADD_OPTS[@]}" "${CONF_NAME}"
+                rv=$?
+                set -e
             fi
-            oidc-add "${OIDC_ADD_OPTS[@]}" "${CONF_NAME}"
-        else
-            # The account configuration is already loaded
+            if [[ "${rv}" -eq 0 ]]; then
+                # OK, loaded
+                :
+            else
+                # Expired
+                oidc_gen_reauthenticate="yes"
+            fi
+        fi
+        if [[ "${oidc_gen_reauthenticate}" = "no" ]]; then
             get_token_ignore_expired
 
             # shellcheck disable=SC2310
-            is_jwt_expired || :
+            if is_jwt_expired; then
+                # Expired
+                oidc_gen_reauthenticate="yes"
+            else
+                # OK, loaded
+                run_oidc_gen="no"
+                INFO "Account configuration is loaded: ${CONF_NAME}"
+            fi
         fi
-    else
-        set_OIDC_ENCRYPTION_PW yes
-        local OIDC_ADD_OPTS=()
+    fi
+    if [[ "${run_oidc_gen}" = "yes" ]]; then
+        local OIDC_GEN_OPTS=()
+        if [[ -z "${OIDC_ENCRYPTION_PW:-}" ]]; then
+            set_OIDC_ENCRYPTION_PW yes
+        fi
         if [[ -n "${OIDC_ENCRYPTION_PW:-}" ]]; then
-            OIDC_ADD_OPTS+=("--pw-env")
+            OIDC_GEN_OPTS+=("--pw-env")
+        fi
+        if [[ "${oidc_gen_reauthenticate}" = "yes" ]]; then
+            OIDC_GEN_OPTS+=("--reauthenticate")
         fi
         oidc-gen --pub \
-            "${OIDC_ADD_OPTS[@]}" \
+            "${OIDC_GEN_OPTS[@]}" \
             -w device \
             --issuer="${ISSUER}" \
             --scope="${SCOPES}" \
