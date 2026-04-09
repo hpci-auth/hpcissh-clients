@@ -253,7 +253,7 @@ Choose the agent that fits your workflow. **`jwt-agent` is recommended for most 
 3. Generate a JWT and copy the provided **command line for jwt-agent** and **passphrase** to your clipboard.
 4. Run `jwt-agent -s <JWT_SERVER_URL> -l <USER_NAME>` and enter the **passphrase**.
 5. (Refer to [Step 2: Connect to a SSH Server](#step-2-connect-to-a-ssh-server))
-6. (To stop): Run `jwt-agent --stop`
+6. **Stopping the Agent**: Run `jwt-agent --stop`
 
 ![demo-jwtagent](./asciinema/jwtagent.gif)
 
@@ -268,17 +268,55 @@ Choose the agent that fits your workflow. **`jwt-agent` is recommended for most 
     ```
 
 4. Run `oidc-sshconf-hpci` and follow browser prompts.
-    - Enter encryption password
+    - Enter encryption password (To encrypt the refresh token)
     - Open URL in Web browser
     - Enter the code displayed on your terminal
     - Select your shibboleth IdP
     - Login your shibboleth IdP
     - Enter the One-time code
 5. (Refer to [Step 2: Connect to a SSH Server](#step-2-connect-to-a-ssh-server))
-6. (To stop): Run the following command to stop oidc-agent and unset environment variables.
+6. **Re-authentication**: If your refresh token expires, run `oidc-sshconf-hpci` to log in again.
+
+    *Example of an expired token error and the recovery process:*
+
+    ```bash
+    $ hpcissh host-a
+    ERROR: Command failed (exit 1): 'oidc-token -t 180 hpci'
+    ERROR: (Expired or invalid refresh token)
+    INFO: Run the following commands to log in again:
+    INFO:     $ oidc-sshconf-hpci
+
+    $ oidc-sshconf-hpci
+    Enter decryption password for account config 'hpci': 
+    ERROR: Command failed (exit 1): 'oidc-add --pw-env hpci'
+    Generating account configuration ...
+    accepted
+
+    Using a browser on any device, visit:
+    https://metis.hpci.nii.ac.jp/auth/realms/HPCI/device
+    ...
+    ```
+
+7. **Stopping the Agent**: To terminate the `oidc-agent` session and unset the environment variables in your current shell, run:
 
     ```bash
     eval `hpci-oidc-agent-service stop`
+    ```
+
+8. **Deleting Account Configuration**: To completely remove the encrypted refresh token from your local disk (`~/.config/oidc-agent/`), run:
+
+    ```bash
+    $ oidc-gen -d hpci
+    Enter decryption password for account config 'hpci': 
+    Do you really want to delete this configuration? [No/yes/quit]: yes
+    The generated account was successfully removed from oidc-agent. You don't have to run oidc-add.
+    Successfully deleted account configuration.
+    ```
+
+9. **Force Delete (Troubleshooting)**: If you forget your encryption password or the standard delete command fails, you can manually remove the configuration file:
+
+    ```bash
+    rm ~/.config/oidc-agent/hpci
     ```
 
 ![demo-oidcagent](./asciinema/oidcagent.gif)
