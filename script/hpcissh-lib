@@ -322,7 +322,7 @@ load_common_config() {
     set_param HPCISSH_PORT "2222"
     set_param HPCISSH_TOKEN_INPUT "sshpass"  # sshpass or SSH_ASKPASS
     set_param HPCISSH_AUTO_LOGIN_NAME "yes"  # no ... speedup
-    set_param HPCISSH_AUTO_KNWON_HOSTS "yes"  # yes ... use KnownHostsCommand
+    set_param HPCISSH_AUTO_KNOWN_HOSTS "yes"  # yes ... use KnownHostsCommand
 
     # ===== Parameters for commands related to hpcissh-clients =====
     # (Call set_param() to display the parameters by hpci-config-show)
@@ -341,7 +341,7 @@ load_common_config() {
     # shellcheck disable=SC2154
     : "${HPCISSH_AUTO_LOGIN_NAME}"
     # shellcheck disable=SC2154
-    : "${HPCISSH_AUTO_KNWON_HOSTS}"
+    : "${HPCISSH_AUTO_KNOWN_HOSTS}"
     # shellcheck disable=SC2154
     : "${HPCISSH_TOKEN_INPUT}"
     # shellcheck disable=SC2154
@@ -356,7 +356,7 @@ load_common_config() {
     : "${OIDC_USERINFO_ENDPOINT_PATH}"
 
     # Update global variables
-    if [[ "${HPCISSH_AUTO_KNWON_HOSTS}" = "yes" ]]; then
+    if [[ "${HPCISSH_AUTO_KNOWN_HOSTS}" = "yes" ]]; then
          SSH_BASIC_OPTS+=("${KNOWN_HOSTS_CMD[@]}")
     fi
     SSH_OPTS+=("${SSH_BASIC_OPTS[@]}" "${FORWARD_BEHAVIOR[@]}")

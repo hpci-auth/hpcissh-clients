@@ -73,7 +73,7 @@
 [1.635, "o", "\r\n"]
 [0.000, "o", "\u001b[?2004l\r"]
 [0.012, "o", "HPCISSH_DEBUG_X=\"no\"\r\nHPCISSH_DEBUG=\"no\"\r\nHPCISSH_QUIET=\"no\"\r\nUSE_JWT_AGENT=\"no\"\r\nOIDC_AT_LEAST_VALID_TIME=\"180\"\r\nOIDC_AGENT_FORWARD=\"yes\"\r\nOIDC_AGENT_CONF_NAME=\"hpci\"\r\nOIDC_ISSUER=\"https://metis.hpci.nii.ac.jp/auth/realms/HPCI\"\r\nOIDC_AGENT_USE_PW_ENV=\"yes\"\r\nOIDC_USERINFO_ENDPOINT_PATH=\"/protocol/openid-connect/userinfo\"\r\nOIDC_USERINFO_ENDPOINT=\"\"\r\nOIDC_USERINFO_EXPIRE=\"1800\"\r\n"]
-[0.000, "o", "HPCISSH_PORT=\"2222\"\r\nHPCISSH_TOKEN_INPUT=\"sshpass\"\r\nHPCISSH_AUTO_LOGIN_NAME=\"yes\"\r\nHPCISSH_AUTO_KNWON_HOSTS=\"yes\"\r\nOIDC_AGENT_OPTS=\"--no-autoreauthenticate\"\r\nOIDC_CONFIG_DIR=\"\"\r\n"]
+[0.000, "o", "HPCISSH_PORT=\"2222\"\r\nHPCISSH_TOKEN_INPUT=\"sshpass\"\r\nHPCISSH_AUTO_LOGIN_NAME=\"yes\"\r\nHPCISSH_AUTO_KNOWN_HOSTS=\"yes\"\r\nOIDC_AGENT_OPTS=\"--no-autoreauthenticate\"\r\nOIDC_CONFIG_DIR=\"\"\r\n"]
 [0.000, "o", "OIDC_SOCK=\"\"\r\nOIDCD_PID=\"\"\r\n"]
 [0.000, "o", "OIDCD_PID_FILE=\"\"\r\nJWT_USER_PATH=\"\"\r\n"]
 [0.000, "o", "\u001b[?2004h\u001b[32mhpci000000@bash\u001b[0m:\u001b[34m~\u001b[0m$ "]

@@ -18,7 +18,7 @@
   - hpcissh-config-show
   - hpcissh-append-ssh-ca
 - New configuration directive
-  - HPCISSH_AUTO_KNWON_HOSTS (default: yes)
+  - HPCISSH_AUTO_KNOWN_HOSTS (default: yes)
   - HPCISSH_AUTO_LOGIN_NAME (default: yes)
   - OIDC_AGENT_USE_PW_ENV (default: yes)
   - OIDC_AGENT_OPTS
