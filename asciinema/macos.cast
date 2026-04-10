@@ -1,7 +1,7 @@
 {"version":3,"term":{"cols":80,"rows":47,"type":"tmux-256color","version":"tmux 3.6a","theme":{"fg":"#ffffff","bg":"#1e1e1e","palette":"#000000:#990000:#00a600:#999900:#0000b3:#b300b3:#00a6b3:#bfbfbf:#666666:#e60000:#00d900:#e6e600:#0000ff:#e600e6:#00e6e6:#e6e6e6"}},"timestamp":1772002267,"command":"PS1='hpci000000@macOS ~ % ' bash --norc","env":{"SHELL":"/bin/bash"}}
 [0.013, "o", "\u001b[?2004hhpci000000@macOS ~ % "]
-[1.618, "o", "\u001b[7mbrew tap hpci-auth/homebrew-tap\u001b[27m"]
-[1.354, "o", "\r\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[Cbrew tap hpci-auth/homebrew-tap\r\n"]
+[1.618, "o", "\u001b[7mbrew tap hpci-auth/tap\u001b[27m"]
+[1.354, "o", "\r\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[Cbrew tap hpci-auth/tap\r\n"]
 [0.000, "o", "\u001b[?2004l\r"]
 [0.467, "o", "\u001b[34m==>\u001b[0m \u001b[1mTapping hpci-auth/tap\u001b[0m\r\n"]
 [0.024, "o", "Cloning into '/opt/homebrew/Library/Taps/hpci-auth/homebrew-tap'...\r\n"]
