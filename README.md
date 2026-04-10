@@ -482,6 +482,7 @@ make test
 
 - Release-based Tagging: Creating a release with a `vX.Y.Z` tag automatically builds and pushes container images tagged as `X.Y.Z`, `X.Y`, and `latest`.
 - Branch-based Builds: Container images are automatically generated upon pushing to the `main` and `develop` branches.
+  - `develop` branch: ghcr.io/hpci-auth/hpcissh-almalinux10:develop
 - CI Testing:
   - Pushes to any other branches trigger tests only (no image generation).
   - Tests are automatically executed for all pull requests.
