@@ -191,11 +191,34 @@ init_SSH_ASKPASS() {
     DEBUG "init_SSH_ASKPASS"
 }
 
+run_setsid_wait() {
+    if command -v setsid > /dev/null 2>&1; then
+        setsid -w "$@"
+    else
+        perl -e '
+            use strict;
+            use warnings;
+            use POSIX qw(setsid);
+            my $pid = fork;
+            die "fork: $!" unless defined $pid;
+            if ($pid == 0) {
+                setsid() or die "setsid: $!";
+                exec { $ARGV[0] } @ARGV or die "exec: $!";
+            }
+            waitpid($pid, 0);
+            exit( ($? & 127) ? 128 + ($? & 127) : ($? >> 8) );
+        ' -- "$@"
+        # Replicate POSIX waitpid() status macros:
+        #   ($? & 127)  => WIFSIGNALED / WTERMSIG (Return 128+signum)
+        #   ($? >> 8)   => WEXITSTATUS
+    fi
+}
+
 runssh() {
     # shellcheck disable=SC2154
     if [[ "${HPCISSH_TOKEN_INPUT}" = "SSH_ASKPASS" ]]; then
         init_SSH_ASKPASS
-        setsid -w "$@"
+        run_setsid_wait "$@"
     else
         init_sshpass
         sshpass -e -P "${OAUTH_SSH_AT_PROMPT}" "$@"
