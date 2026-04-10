@@ -149,7 +149,7 @@ docker image ls
 
 #### Cleaning up old images
 
-To save disk space by removing old, unused container images:
+To save disk space by removing dangling container images that are no longer referenced by a tag:
 
 ```bash
 # Using Podman
@@ -159,7 +159,19 @@ podman image prune
 docker image prune
 ```
 
-**Warning**: These commands remove *all* unused (dangling) images across your entire system, including those from other projects. To safely remove only the `hpcissh` image, use `podman rmi <IMAGE_NAME>` instead.
+**Note**: By default, these commands remove dangling images only. They do not remove all unused tagged images.
+
+If you want to remove only the `hpcissh` image explicitly, use the image name instead:
+
+```bash
+# Using Podman
+podman rmi ghcr.io/hpci-auth/hpcissh-almalinux10:latest
+
+# Using Docker
+docker rmi ghcr.io/hpci-auth/hpcissh-almalinux10:latest
+```
+
+Be careful when using broader cleanup options such as `podman image prune -a` or `docker image prune -a`, because they may remove unused tagged images from other projects as well.
 
 #### (Advanced) Building and Customizing the Container Image Locally
 
