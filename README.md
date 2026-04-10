@@ -135,7 +135,35 @@ podman pull ghcr.io/hpci-auth/hpcissh-almalinux10:latest
 docker pull ghcr.io/hpci-auth/hpcissh-almalinux10:latest
 ```
 
+#### Listing downloaded images
+
+To see a list of container images currently stored on your machine:
+
+```bash
+# Using Podman
+podman image ls
+
+# Using Docker
+docker image ls
+```
+
+#### Cleaning up old images
+
+To save disk space by removing old, unused container images:
+
+```bash
+# Using Podman
+podman image prune
+
+# Using Docker
+docker image prune
+```
+
+**Warning**: These commands remove *all* unused (dangling) images across your entire system, including those from other projects. To safely remove only the `hpcissh` image, use `podman rmi <IMAGE_NAME>` instead.
+
 #### (Advanced) Building and Customizing the Container Image Locally
+
+To build the container image yourself (e.g., to change dependency versions or add software), use the following commands:
 
 ```bash
 cd docker
@@ -146,7 +174,9 @@ podman build -f Dockerfile-almalinux -t hpcissh-almalinux10:localdev \
   ../
 ```
 
-The container image is kept minimal by design. To add extra packages, you can use `microdnf install <package>` inside the container and rebuild the image locally.
+After building, you can start your custom image by replacing the image name in the [starting command](#common-procedures-for-podman-or-docker) with `hpcissh-almalinux10:localdev`.
+
+The container image is kept minimal by design. To add extra packages, you can use `microdnf install <package>` in the `Dockerfile-almalinux` and rebuild the image locally.
 
 ---
 
@@ -393,6 +423,7 @@ Customize via environment variables or `~/.hpcissh`.
 Run `hpcissh-config-show` to display the current effective values.
 
 Note:
+
 - `~/.hpcissh` is parsed as simple `KEY=VALUE` lines.
 - Shell syntax is not supported.
 
