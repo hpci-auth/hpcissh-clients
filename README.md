@@ -7,15 +7,15 @@ OAuth-based SSH client toolset for HPCI.
 The following tools are required for the scripts to function:
 
 - `ssh` (OpenSSH): Standard remote login tool using the SSH protocol.
-- `sshpass`: Non-interactive SSH password provider.
 - `jq`: JSON processor.
 - `curl`: Tool for transferring data with URLs.
-- `bash` (Version 5 or later): For executing shell-scripts.
-- `ps` (procps-ng,procps): Display current processes.
-- `jwt-agent`: For managing JWT tokens.
+- `bash` (Version 5 or later): Required to run the shell scripts.
+- `ps`: Used by `hpci-oidc-agent-service`.
+- `jwt-agent`: Token agent for most users.
   - <https://github.com/oss-tsukuba/jwt-agent>
-- `oidc-agent` (optional): For managing JWT tokens and agent forwarding.
+- `oidc-agent` (optional): Required when using OIDC-based login and agent forwarding.
   - <https://github.com/indigo-dc/oidc-agent>
+- `sshpass` (conditionally required): Needed when `HPCISSH_TOKEN_INPUT=sshpass` is used, which is the default.
 
 ## Installation
 
@@ -333,7 +333,9 @@ hpcissh REMOTE_USER@<HOSTNAME>
 
 To log out of the remote machine, run the `exit` command.
 
-If you have jwt-agent or oidc-agent running, you can also use hpciscp and hpcisftp. The usage is exactly the same as standard scp and sftp.
+If you have `jwt-agent` or `oidc-agent` running, you can also use `hpciscp` and `hpcisftp`.
+
+Their command-line style is close to standard `scp` and `sftp`, but not fully identical in every edge case, because `hpcissh` clients rewrite remote host arguments to resolve the remote login name automatically. For ordinary usage, the standard forms work as expected. If you use complex option combinations or unusual argument ordering, using HPCISSH_AUTO_LOGIN_NAME=no and explicitly specifying `REMOTE_USER@HOST` is recommended.
 
 ### Note: Using `hpciscp` in the Container
 
@@ -374,7 +376,7 @@ There are no immediate security concerns. This warning will be resolved as serve
 - `hpcisftp`: Secure FTP (sftp compatible)
 - `hpcissh-config-show`: Display current configuration
 - `hpcissh-append-ssh-ca`: Manage SSH CA for HPCI
-- `hpcissh-version`: Show version info
+- `hpcissh-version`: Show the hpcissh-clients version and the local SSH client version
 - `hpci-oidc-agent-service`: Service wrapper for oidc-agent
 - `oidc-sshconf-hpci`: Configure HPCI issuer profile for oidc-agent
 - `hpci-token`: Display current JWT
@@ -387,7 +389,12 @@ There are no immediate security concerns. This warning will be resolved as serve
 
 ### Configurable Parameters for hpcissh and related commands
 
-Customize via environment variables or `~/.hpcissh`. Run `hpcissh-config-show` to display the current effective values.
+Customize via environment variables or `~/.hpcissh`.
+Run `hpcissh-config-show` to display the current effective values.
+
+Note:
+- `~/.hpcissh` is parsed as simple `KEY=VALUE` lines.
+- Shell syntax is not supported.
 
 | Parameter | Description (`Default value`) |
 | :--- | :--- |
@@ -396,26 +403,26 @@ Customize via environment variables or `~/.hpcissh`. Run `hpcissh-config-show` t
 | `HPCISSH_DEBUG_X` | Run scripts with `set -x` (`no`) |
 | `HPCISSH_QUIET` | Suppress warning messages (`no`) |
 | `HPCISSH_PORT` | Destination SSH port (`2222`) |
-| `HPCISSH_AUTO_KNOWN_HOSTS` | Automatically use HPCI SSH CA (`yes`) |
+| `HPCISSH_AUTO_KNOWN_HOSTS` | Automatically use the bundled HPCI SSH CA public key (`yes`) |
 | `HPCISSH_AUTO_LOGIN_NAME` | Automatically resolve remote login name (`yes`) |
 | `HPCISSH_TOKEN_INPUT` | Token input method: `sshpass` or `SSH_ASKPASS` (`sshpass`) |
 | `OIDC_ISSUER` | OpenID Connect issuer URL for `oidc-agent` (`https://metis.hpci.nii.ac.jp/auth/realms/HPCI`) |
 | `OIDC_AGENT_FORWARD` | Enable `oidc-agent` forwarding (`yes`) |
 | `OIDC_AGENT_OPTS` | Options for `oidc-agent` via `hpci-oidc-agent-service` (`--no-autoreauthenticate --no-autoload`) |
 | `OIDC_AGENT_CONF_NAME` | Account config name for `oidc-agent` (`hpci`) |
-| `OIDC_AGENT_USE_PW_ENV` | Use `--pw-env` for `oidc-gen` and `oidc-add` to suppress GUI popup for `oidc-agent` on Desktop environment (`yes`) |
-| `OIDC_AT_LEAST_VALID_TIME` | Min validity required for access token for `oidc-agent` (`180` sec.) |
-| `OIDC_USERINFO_EXPIRE` | Lifetime of cached user info (`1800` sec.) |
-| `OIDC_USERINFO_ENDPOINT` | Full URL for the userinfo endpoint. If this value is set,  OIDC_USERINFO_ENDPOINT_PATH is ignored (Default: `<empty string>`: automatically retrieved from the access token) |
-| `OIDC_USERINFO_ENDPOINT_PATH` | Path to the userinfo endpoint (`/protocol/openid-connect/userinfo`) |
+| `OIDC_AGENT_USE_PW_ENV` | Use `--pw-env` for `oidc-gen` and `oidc-add` to suppress GUI prompts (`yes`) |
+| `OIDC_AT_LEAST_VALID_TIME` | Minimum required validity for an access token used via `oidc-agent` (`180` sec.) |
+| `OIDC_USERINFO_EXPIRE` | Cache lifetime of downloaded user info (`1800` sec.) |
+| `OIDC_USERINFO_ENDPOINT` | Full URL of the userinfo endpoint. If set, `OIDC_USERINFO_ENDPOINT_PATH` is ignored (`<empty>`) |
+| `OIDC_USERINFO_ENDPOINT_PATH` | Path of the userinfo endpoint (`/protocol/openid-connect/userinfo`) |
 
 ### SSH CA (Public Key) for HPCI
 
-**No changes needed** for default settings.
+No changes are needed for the default configuration.
 
-`hpcissh` command automatically uses the public key of the SSH CA for HPCI to verify SSH servers. Manual setup is **NOT required** unless `HPCISSH_AUTO_KNOWN_HOSTS=no` is set.
+By default, `hpcissh` uses the bundled HPCI SSH CA public key automatically to verify SSH servers. Manual setup is only necessary if automatic known-host handling is disabled.
 
-To manually update:
+To append the CA key manually:
 
 ```bash
 # System-wide
@@ -441,6 +448,13 @@ The following files are managed automatically by `hpci-oidc-agent-service`:
 ### Testing
 
 #### Offline testing
+
+Note for macOS:
+The built-in `/bin/bash` is old for these scripts. Always specify a newer Bash, for example:
+
+```bash
+bash_path=$(brew --prefix)/bin/bash
+```
 
 ```bash
 # For Linux:
