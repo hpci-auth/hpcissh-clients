@@ -294,7 +294,7 @@ Choose the agent that fits your workflow. **`jwt-agent` is recommended for most 
 2. Log in to the HPCI JWT server: [elpis (main-system)](https://elpis.hpci.nii.ac.jp) or [elpis-c (sub-system)](https://elpis-c.hpci.nii.ac.jp).
 3. Generate a JWT and copy the provided **command line for jwt-agent** and **passphrase** to your clipboard.
 4. Run `jwt-agent -s <JWT_SERVER_URL> -l <USER_NAME>` and enter the **passphrase**.
-5. (Refer to [Step 2: Connect to a SSH Server](#step-2-connect-to-a-ssh-server))
+5. (Refer to [Step 2: Connect to an SSH Server](#step-2-connect-to-an-ssh-server))
 6. **Stopping the Agent**: Run `jwt-agent --stop`
 
 ![demo-jwtagent](./asciinema/jwtagent.gif)
@@ -310,13 +310,13 @@ Choose the agent that fits your workflow. **`jwt-agent` is recommended for most 
     ```
 
 4. Run `oidc-sshconf-hpci` and follow browser prompts.
-    - Enter encryption password (To encrypt the refresh token)
-    - Open URL in Web browser
+    - Enter encryption password (to encrypt the refresh token)
+    - Open the URL displayed on your terminal in a web browser
     - Enter the code displayed on your terminal
-    - Select your shibboleth IdP
-    - Login your shibboleth IdP
-    - Enter the One-time code
-5. (Refer to [Step 2: Connect to a SSH Server](#step-2-connect-to-a-ssh-server))
+    - Select your Shibboleth IdP
+    - Log in to your Shibboleth IdP
+    - Enter the one-time code or use your Passkey
+5. (Refer to [Step 2: Connect to an SSH Server](#step-2-connect-to-an-ssh-server))
 6. **Re-authentication**: If your refresh token expires, run `oidc-sshconf-hpci` to log in again.
 
     *Example of an expired token error and the recovery process:*
@@ -363,7 +363,7 @@ Choose the agent that fits your workflow. **`jwt-agent` is recommended for most 
 
 ![demo-oidcagent](./asciinema/oidcagent.gif)
 
-### Step 2: Connect to a SSH Server
+### Step 2: Connect to an SSH Server
 
 ```bash
 # Automatically resolve the remote login name
@@ -377,7 +377,7 @@ To log out of the remote machine, run the `exit` command.
 
 If you have `jwt-agent` or `oidc-agent` running, you can also use `hpciscp` and `hpcisftp`.
 
-Their command-line style is close to standard `scp` and `sftp`, but not fully identical in every edge case, because `hpcissh` clients rewrite remote host arguments to resolve the remote login name automatically. For ordinary usage, the standard forms work as expected. If you use complex option combinations or unusual argument ordering, using HPCISSH_AUTO_LOGIN_NAME=no and explicitly specifying `REMOTE_USER@HOST` is recommended.
+Their command-line style is close to standard `scp` and `sftp`, but not fully identical in every edge case, because `hpcissh` clients rewrite remote host arguments to resolve the remote login name automatically. For ordinary usage, the standard forms work as expected. If you use complex option combinations or unusual argument ordering, using `HPCISSH_AUTO_LOGIN_NAME=no` and explicitly specifying `REMOTE_USER@HOST` is recommended.
 
 ### Note: Using `hpciscp` in the Container
 
