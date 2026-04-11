@@ -80,7 +80,7 @@ _get_token() {
     # global
     OIDC_AT="${OIDC_AT:-}"
     if [[ -n "${OIDC_AT}" ]]; then
-        DEBUG "OIDC_AT: use OIDC_AT (access token) environemnt variable"
+        DEBUG "OIDC_AT: use OIDC_AT (access token) environment variable"
         return 0
     fi
 
