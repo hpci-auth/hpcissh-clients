@@ -698,13 +698,6 @@ load_conf() {
     fi
 }
 
-access_token_exists() {
-    if [[ -z "${OIDC_AT:-}" ]]; then
-        ERROR "oidc-agent (and OIDC_SOCK environment) is required"
-        exit 1
-    fi
-}
-
 warning_not_found_localacc() {
     local username="${USER:-}"
     if [[ -z "${username}" ]]; then
