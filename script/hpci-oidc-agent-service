@@ -15,7 +15,7 @@ if [[ "${SHELL_TYPE}" == "csh" || "${SHELL_TYPE}" == "tcsh" ]]; then
 elif [[ "${PARENT_CMD}" == *"tcsh"* || "${PARENT_CMD}" == *"csh"* ]]; then
     DETECTED_SHELL="csh"
 elif [[ -n "${version}" ]] && [[ "${version}" == *"tcsh"* ]]; then
-    DETECTED_SHELL="tcsh"
+    DETECTED_SHELL="csh"
 else
     DETECTED_SHELL="sh"
 fi
