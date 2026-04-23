@@ -309,6 +309,8 @@ Choose the agent that fits your workflow. **`jwt-agent` is recommended for most 
     eval `hpci-oidc-agent-service use`
     ```
 
+    **Note for csh/tcsh users**: The command above automatically detects your shell type and outputs `setenv` commands instead of `export`. If the detection fails (e.g., when called from another script), you can force the shell type by setting `HPCISSH_SHELL_TYPE=csh`.
+
 4. Run `oidc-sshconf-hpci` and follow browser prompts.
     - Enter encryption password (to encrypt the refresh token)
     - Open the URL displayed on your terminal in a web browser
@@ -448,6 +450,7 @@ Note:
 | `HPCISSH_PORT` | Destination SSH port (`2222`) |
 | `HPCISSH_AUTO_KNOWN_HOSTS` | Automatically use the bundled HPCI SSH CA public key (`yes`) |
 | `HPCISSH_AUTO_LOGIN_NAME` | Automatically resolve remote login name (`yes`) |
+| `HPCISSH_SHELL_TYPE` | Manually specify shell type: `csh` or `sh`. If empty, it's automatically detected from the parent process. (`<empty>`) |
 | `HPCISSH_TOKEN_INPUT` | Token input method: `sshpass` or `SSH_ASKPASS` (`sshpass`) |
 | `OIDC_ISSUER` | OpenID Connect issuer URL for `oidc-agent` (`https://metis.hpci.nii.ac.jp/auth/realms/HPCI`) |
 | `OIDC_AGENT_FORWARD` | Enable `oidc-agent` forwarding (`yes`) |

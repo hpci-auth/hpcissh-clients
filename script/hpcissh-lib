@@ -343,6 +343,7 @@ load_common_config() {
     set_param HPCISSH_TOKEN_INPUT "sshpass"  # sshpass or SSH_ASKPASS
     set_param HPCISSH_AUTO_LOGIN_NAME "yes"  # no ... speedup
     set_param HPCISSH_AUTO_KNOWN_HOSTS "yes"  # yes ... use KnownHostsCommand
+    set_param HPCISSH_SHELL_TYPE ""  # csh or sh (default: auto)
 
     # ===== Parameters for commands related to hpcissh-clients =====
     # (Call set_param() to display the parameters by hpci-config-show)

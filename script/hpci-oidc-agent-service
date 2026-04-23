@@ -7,19 +7,19 @@ load_common_config
 
 PARENT_CMD=$(ps -p "${PPID}" -o comm=)
 PARENT_CMD=$(basename -- "${PARENT_CMD}" | tr -d '-')
-SHELL_TYPE="${SHELL_TYPE:-}"
-version="${version:-}"  # tcsh version
+HPCISSH_SHELL_TYPE="${HPCISSH_SHELL_TYPE:-}"
 
-if [[ "${SHELL_TYPE}" == "csh" || "${SHELL_TYPE}" == "tcsh" ]]; then
-    DETECTED_SHELL="csh"
-elif [[ "${PARENT_CMD}" == *"tcsh"* || "${PARENT_CMD}" == *"csh"* ]]; then
-    DETECTED_SHELL="csh"
-elif [[ -n "${version}" ]] && [[ "${version}" == *"tcsh"* ]]; then
-    DETECTED_SHELL="csh"
+if [[ -n "${HPCISSH_SHELL_TYPE}" ]]; then
+    case "${HPCISSH_SHELL_TYPE}" in
+        csh|tcsh) DETECTED_SHELL="csh" ;;
+        *)        DETECTED_SHELL="sh"  ;;
+    esac
 else
-    DETECTED_SHELL="sh"
+    case "${PARENT_CMD}" in
+        csh|tcsh) DETECTED_SHELL="csh" ;;
+        *)        DETECTED_SHELL="sh"  ;;
+    esac
 fi
-
 # Overridable
 OIDC_AGENT_SERVICE="${OIDC_AGENT_SERVICE:-oidc-agent-service}"
 

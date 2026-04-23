@@ -8,6 +8,7 @@
 - Update feature
   - automatically use HPCI SSH CA (no need to edit the known_hosts file anymore)
   - By using hpci-oidc-agent-service, HPCI configurations for oidc-agent is added automatically
+  - improve shell detection logic for csh/tcsh users in hpci-oidc-agent-service
   - oidc-sshconf-hpci: Automatically re-authenticates upon expiration
   - revise the error messages and suggested re-login commands for expired refresh token to ensure re-authentication works across all supported environments
   - fallback to oidc-agent automatically when the jwt-agent token is expired
@@ -20,6 +21,7 @@
 - New configuration directive
   - HPCISSH_AUTO_KNOWN_HOSTS (default: yes)
   - HPCISSH_AUTO_LOGIN_NAME (default: yes)
+  - HPCISSH_SHELL_TYPE (default: auto)
   - OIDC_AGENT_USE_PW_ENV (default: yes)
   - OIDC_AGENT_OPTS
 
