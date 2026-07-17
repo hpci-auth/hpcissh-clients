@@ -207,7 +207,9 @@ The container image is kept minimal by design. To add extra packages, you can us
 
     ```bash
     brew tap hpci-auth/tap
-    brew install hpcissh
+    brew trust --formula hpci-auth/tap/hpcissh
+    brew trust --formula hpci-auth/tap/jwt-agent
+    brew install -y hpcissh
     ```
 
 3. **(Optional) Install oidc-agent**:
@@ -215,18 +217,25 @@ The container image is kept minimal by design. To add extra packages, you can us
 
     ```bash
     brew tap indigo-dc/oidc-agent
-    brew install oidc-agent
+    brew trust --formula indigo-dc/oidc-agent/oidc-agent
+    brew install -y oidc-agent
     ```
 
-#### Upgrading or Uninstalling
+#### Upgrading hpcissh for macOS
 
 ```bash
-# To upgrade
-brew update && brew upgrade hpcissh
+brew update
+brew upgrade hpcissh
+```
 
-# To uninstall
-brew uninstall hpcissh && brew untap hpci-auth/tap
-brew uninstall oidc-agent && brew untap indigo-dc/oidc-agent
+### Uninstalling hpcissh for macOS
+
+```bash
+brew uninstall hpcissh
+brew untap hpci-auth/tap
+
+brew uninstall oidc-agent
+brew untap indigo-dc/oidc-agent
 ```
 
 ---
