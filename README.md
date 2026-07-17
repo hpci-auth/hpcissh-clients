@@ -228,7 +228,7 @@ brew update
 brew upgrade hpcissh
 ```
 
-### Uninstalling hpcissh for macOS
+#### Uninstalling hpcissh for macOS
 
 ```bash
 brew uninstall hpcissh
