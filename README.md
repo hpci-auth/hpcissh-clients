@@ -52,6 +52,7 @@ implications of these permissions before using Docker.
   - Option A: Install Podman within Ubuntu on WSL2
     - **Important**: Ensure `systemd` is enabled in your WSL distribution's `/etc/wsl.conf` (`systemd=true` under `[boot]`) and restart WSL (`wsl --shutdown`). Without this, Podman may fail with errors like `mkdir /run/user/1000: permission denied`.
     - Run `sudo apt-get update && sudo apt-get -y install podman`
+    - Because Podman runs directly inside the WSL2 Ubuntu environment, `podman machine` is not required.
   - Option B: Download Podman Installer (Podman CLI for Windows) from <https://podman.io/>
     - Run the installer and follow the on-screen instructions.
     - (In Powershell) Run `podman machine init` and `podman machine start`
@@ -75,6 +76,32 @@ implications of these permissions before using Docker.
     - Run `sudo dnf -y install podman`
 
 For more details, refer to <https://podman.io/docs/installation>.
+
+#### Managing the Podman Machine (macOS / Windows CLI)
+
+When using the Podman CLI installed on macOS or Windows, `podman machine` is a
+lightweight virtual machine (VM) that runs the Linux environment where Podman
+containers are executed. It is not necessary when Podman is installed and run
+directly in Linux, including Ubuntu running under WSL2.
+
+If you do not need to use Podman for a while, you can stop the VM to release
+its CPU and memory resources:
+
+```bash
+podman machine stop
+```
+
+Stopping the machine does not uninstall Podman or remove its images and
+containers. To resume using Podman, start the VM again:
+
+```bash
+podman machine start
+```
+
+You do not need to stop the machine after every container session. Leave it
+running if you will use Podman again soon. If a container was not configured
+to start automatically, start it separately after the VM has started, for
+example with `podman start <container-name>`.
 
 #### Common Procedures for Podman (or Docker)
 
@@ -121,7 +148,9 @@ For more details, refer to <https://podman.io/docs/installation>.
     - **Note for WSL2**: You can safely ignore the warning message `WARN[0000] "/" is not a shared mount, this could cause issues or missing mounts with rootless containers`.
 
 2. Follow the steps in [Using hpcissh](#using-hpcissh) inside the container.
-3. Type `exit` to quit. The container is automatically removed.
+3. Type `exit` to quit. The container is automatically removed, and any
+   `jwt-agent` or `oidc-agent` processes running inside the container are also
+   terminated.
     - **Warning**: Any files stored strictly within the container are volatile and will be deleted automatically.
       Always copy important data to `~/HOST_HOMEDIR/` for permanent storage.
 
