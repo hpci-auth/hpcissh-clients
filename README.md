@@ -99,9 +99,7 @@ podman machine start
 ```
 
 You do not need to stop the machine after every container session. Leave it
-running if you will use Podman again soon. If a container was not configured
-to start automatically, start it separately after the VM has started, for
-example with `podman start <container-name>`.
+running if you will use Podman again soon.
 
 #### Common Procedures for Podman (or Docker)
 
