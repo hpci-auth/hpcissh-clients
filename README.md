@@ -110,6 +110,7 @@ running if you will use Podman again soon.
     # Using Podman (recommended):
     podman run --userns=keep-id --replace \
       --detach-keys="ctrl-^" \
+      --device /dev/fuse --cap-add SYS_ADMIN --security-opt seccomp=unconfined \
       --rm -it --init --hostname hpcissh --name hpcissh \
       --mount type=bind,src=${HOME},dst=/HOST_HOMEDIR \
       -e USER_UID=$(id -u) \
@@ -122,6 +123,7 @@ running if you will use Podman again soon.
     # If using Docker:
     docker run \
       --detach-keys="ctrl-^" \
+      --device /dev/fuse --cap-add SYS_ADMIN --security-opt seccomp=unconfined \
       --rm -it --init --hostname hpcissh --name hpcissh \
       --mount type=bind,src=${HOME},dst=/HOST_HOMEDIR \
       -e USER_UID=$(id -u) \
@@ -134,6 +136,7 @@ running if you will use Podman again soon.
     # If using Podman in Windows Powershell:
     PS C:\Users\USERNAME> podman run --userns=keep-id --replace `
         --detach-keys="ctrl-^" `
+        --device /dev/fuse --cap-add SYS_ADMIN --security-opt seccomp=unconfined `
         --rm -it --init --hostname hpcissh --name hpcissh `
         --mount type=bind,src=${HOME},dst=/HOST_HOMEDIR `
         -e USER_UID=1000 `
@@ -207,9 +210,8 @@ To build the container image yourself (e.g., to change dependency versions or ad
 ```bash
 cd docker
 podman build -f Dockerfile-almalinux -t hpcissh-almalinux10:localdev \
-  --build-arg ALMA_VERSION=10 \
-  --build-arg OIDC_AGENT_VERSION=4.5.2 \
-  --build-arg JWT_AGENT_VERSION=1.1.1 \
+  --build-arg OIDC_AGENT_VERSION=?.?.? \
+  --build-arg JWT_AGENT_VERSION=?.?.? \
   ../
 ```
 
@@ -434,6 +436,21 @@ hpciscp ~/HOST_HOMEDIR/myfile.txt <HOSTNAME>:/path/to/myfile.txt
 ```
 
 **Warning**: Any files stored strictly within the container's internal filesystem are volatile and will be deleted automatically when the container exits. Always copy important data to `~/HOST_HOMEDIR/` for permanent storage.
+
+### Note: Using `sshfs` in the Container
+
+The mount point must be created in the container's internal filesystem. FUSE-mounted files cannot be accessed from the host through `~/HOST_HOMEDIR/`.
+
+```bash
+mkdir <Local directory>  # e.g., /tmp/sshfs
+sshfs -o ssh_command=hpcissh <HOSTNAME>:<Remote directory> <Local directory>
+```
+
+To unmount the mount point:
+
+```bash
+umount <Local directory>
+```
 
 ### Note: Post-Quantum Key Exchange Warning
 
