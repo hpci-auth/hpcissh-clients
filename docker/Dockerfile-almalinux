@@ -150,6 +150,7 @@ RUN . /tmp/env_webkit \
     glibc-langpack-ja \
     glibc-locale-source \
     rsync \
+    sshfs \
     sudo \
     which \
     vim-minimal \
