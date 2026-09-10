@@ -6,10 +6,9 @@ shopt -s inherit_errexit
 VERSION="1.12.0 (2026-04-??)"
 
 CA_PUB_FILE="@pkgdatadir@/known_hosts-HPCI-SSH_CA.txt"
-CAT_CMD="${CAT_CMD:-/bin/cat}"
 
 # ssh options for hpcissh,hpciscp,hpcisftp
-KNOWN_HOSTS_CMD=("-o" "KnownHostsCommand=${CAT_CMD} '${CA_PUB_FILE}'")
+KNOWN_HOSTS_OPT=("-o" "UserKnownHostsFile=\"${HOME}/.ssh/known_hosts\" \"${CA_PUB_FILE}\"")
 SSH_BASIC_OPTS=("-o" "PreferredAuthentications=keyboard-interactive")
 SSH_BASIC_OPTS+=("-o" "NumberOfPasswordPrompts=1")
 SSH_OPTS=()
@@ -342,7 +341,7 @@ load_common_config() {
     set_param HPCISSH_PORT "2222"
     set_param HPCISSH_TOKEN_INPUT "sshpass"  # sshpass or SSH_ASKPASS
     set_param HPCISSH_AUTO_LOGIN_NAME "yes"  # no ... speedup
-    set_param HPCISSH_AUTO_KNOWN_HOSTS "yes"  # yes ... use KnownHostsCommand
+    set_param HPCISSH_AUTO_KNOWN_HOSTS "yes"  # yes ... use the bundled HPCI SSH CA
     set_param HPCISSH_SHELL_TYPE ""  # csh or sh (default: auto)
 
     # ===== Parameters for commands related to hpcissh-clients =====
@@ -378,7 +377,7 @@ load_common_config() {
 
     # Update global variables
     if [[ "${HPCISSH_AUTO_KNOWN_HOSTS}" = "yes" ]]; then
-         SSH_BASIC_OPTS+=("${KNOWN_HOSTS_CMD[@]}")
+         SSH_BASIC_OPTS+=("${KNOWN_HOSTS_OPT[@]}")
     fi
     SSH_OPTS+=("${SSH_BASIC_OPTS[@]}" "${FORWARD_BEHAVIOR[@]}")
 }
