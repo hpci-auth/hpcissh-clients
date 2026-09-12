@@ -324,7 +324,7 @@ Choose the agent that fits your workflow. **`jwt-agent` is recommended for most 
 | **Access Token Lifetime** | 600 sec. | 600 sec. |
 | **Agent Forwarding** | No | Yes |
 | **For hpcissh login** | Yes | Yes |
-| **For HPCI Shared Storage** | Yes | Yes |
+| **For HPCI Shared Storage** | Yes | No |
 
 #### Option A: Using `jwt-agent`
 
