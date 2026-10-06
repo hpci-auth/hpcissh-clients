@@ -42,17 +42,18 @@ implications of these permissions before using Docker.
 
 #### OS-specific Podman Setup
 
-- **WSL2 (Windows 11)**:
-  - Install WSL2
+- **WSL (Windows 11)**:
+  - Install WSL by following the [official instructions](https://learn.microsoft.com/en-us/windows/wsl/install). The default setup uses WSL 2.
     - English : <https://learn.microsoft.com/en-us/windows/wsl/install>
     - Japanese: <https://learn.microsoft.com/ja-jp/windows/wsl/install>
+  - Use Ubuntu running in WSL 2. If you changed the default WSL version, see the WSL documentation for how to check or change the version.
   - **Prerequisite**: Update to the latest WSL by running `wsl --update` in PowerShell, and then restart it with `wsl --shutdown`.
   - There are two ways to install Podman.
     - Please choose one of the following methods.
-  - Option A: Install Podman within Ubuntu on WSL2
+  - Option A: Install Podman within Ubuntu on WSL
     - **Important**: Ensure `systemd` is enabled in your WSL distribution's `/etc/wsl.conf` (`systemd=true` under `[boot]`) and restart WSL (`wsl --shutdown`). Without this, Podman may fail with errors like `mkdir /run/user/1000: permission denied`.
     - Run `sudo apt-get update && sudo apt-get -y install podman`
-    - Because Podman runs directly inside the WSL2 Ubuntu environment, `podman machine` is not required.
+    - Because Podman runs directly inside the WSL Ubuntu environment, `podman machine` is not required.
   - Option B: Download Podman Installer (Podman CLI for Windows) from <https://podman.io/>
     - Run the installer and follow the on-screen instructions.
     - (In Powershell) Run `podman machine init` and `podman machine start`
@@ -82,7 +83,7 @@ For more details, refer to <https://podman.io/docs/installation>.
 When using the Podman CLI installed on macOS or Windows, `podman machine` is a
 lightweight virtual machine (VM) that runs the Linux environment where Podman
 containers are executed. It is not necessary when Podman is installed and run
-directly in Linux, including Ubuntu running under WSL2.
+directly in Linux, including Ubuntu running under WSL.
 
 If you do not need to use Podman for a while, you can stop the VM to release
 its CPU and memory resources:
@@ -146,7 +147,7 @@ running if you will use Podman again soon.
     ```
 
     - **Troubleshooting**: If you encounter cgroup-related errors, try adding `--cgroup-manager=cgroupfs` to the `podman run` command.
-    - **Note for WSL2**: You can safely ignore the warning message `WARN[0000] "/" is not a shared mount, this could cause issues or missing mounts with rootless containers`.
+    - **Note for WSL**: You can safely ignore the warning message `WARN[0000] "/" is not a shared mount, this could cause issues or missing mounts with rootless containers`.
 
 2. Follow the steps in [Using hpcissh](#using-hpcissh) inside the container.
 3. Type `exit` to quit. The container is automatically removed, and any
