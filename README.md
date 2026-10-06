@@ -544,6 +544,39 @@ The following files are managed automatically by `hpci-oidc-agent-service`:
 
 ## For Developers
 
+### Development and release workflow
+
+1. Create a working branch from `develop` and make changes on that branch.
+2. Run the tests described below, then merge the working branch into `develop`.
+3. Immediately before release, update the VERSION number in
+   `script/hpcissh-lib` and keep `RELNOTE.md` in sync and commit that update
+   to `develop`.
+4. Open a pull request to merge `develop` into `main`.
+5. Merge the pull request after review. GitHub Actions builds and publishes the
+   container image automatically; see
+   [GitHub Actions](#github-actions-container-image-builds) for details.
+6. Create a release from the repository's GitHub Releases page, using the
+   `vX.Y.Z` tag. See [GitHub Actions](#github-actions-container-image-builds)
+   for the image tags this publishes.
+7. Update the Homebrew tap for the release. See the
+   [homebrew-tap instructions](https://github.com/hpci-auth/homebrew-tap) for
+   the procedure.
+
+### GitHub Actions: Container image builds
+
+GitHub Actions builds and tests the container image:
+
+- When changes are pushed to `develop`,
+  `ghcr.io/hpci-auth/hpcissh-almalinux10:develop` is published automatically.
+- When changes are pushed to another branch, the image is built and tested but
+  not published.
+- After a pull request is merged into `main`,
+  `ghcr.io/hpci-auth/hpcissh-almalinux10:main` is published automatically.
+- After merging a release into `main`, push its `vX.Y.Z` release tag to publish
+  images tagged `X.Y.Z` and `X.Y`. For the stable `v1.*` release line, this
+  also publishes `ghcr.io/hpci-auth/hpcissh-almalinux10:latest`.
+- Pull requests run tests without publishing container images.
+
 ### Testing
 
 #### Offline testing
@@ -590,16 +623,3 @@ cd docker
 make build
 make test
 ```
-
-### GitHub Actions
-
-- Release-based Tagging: Creating a release with a `vX.Y.Z` tag automatically builds and pushes container images tagged as `X.Y.Z`, `X.Y`, and `latest`.
-- Branch-based Builds: Container images are automatically generated upon pushing to the `main` and `develop` branches.
-  - `develop` branch: ghcr.io/hpci-auth/hpcissh-almalinux10:develop
-- CI Testing:
-  - Pushes to any other branches trigger tests only (no image generation).
-  - Tests are automatically executed for all pull requests.
-
-### Homebrew tap
-
-- See <https://github.com/hpci-auth/homebrew-tap>
