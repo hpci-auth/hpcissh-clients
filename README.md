@@ -449,7 +449,7 @@ sshfs -o ssh_command=hpcissh <HOSTNAME>:<Remote directory> <Local directory>
 To unmount the mount point:
 
 ```bash
-umount <Local directory>
+fusermount3 -u <Local directory>
 ```
 
 ### Note: Post-Quantum Key Exchange Warning
