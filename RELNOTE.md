@@ -1,6 +1,6 @@
 # Release note for hpcissh-clients
 
-## version 1.12.0 (2026-04-??)
+## version 1.12.0 (2026-10-30)
 
 - New feature
   - container image for Podman
