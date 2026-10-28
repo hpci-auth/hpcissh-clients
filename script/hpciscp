@@ -1,10 +1,9 @@
-#!/bin/bash
+#!@bash_path@
 
-set -eu
+set -eu -o pipefail
+shopt -s inherit_errexit
 
-CMD_ABS_PATH=`realpath $(which ${0})`
-PARENT_DIR=`dirname ${CMD_ABS_PATH}`
-source ${PARENT_DIR}/hpcissh-lib
+source "${pkglibexecdir:-@pkglibexecdir@}"/hpcissh-lib
 
 usage() {
     echo "Usage: ${0} [scp command option] [[user@]host1:]file1 ... [[user@]host2:]file2"
@@ -13,18 +12,24 @@ usage() {
 init_common "${@}"
 get_token
 
-RAW_ARGV=("scp")
+# shellcheck disable=SC2154
+: "${HPCISSH_PORT}"
+
+SCP_CMD="${SCP_CMD:-scp}"
+
+RAW_ARGV=("${SCP_CMD}")
 RAW_ARGV+=("${@}")
 
 ARGV=()
-for arg in `convert_scp_arg "${RAW_ARGV[@]}"`; do
-    ARGV+=("$arg")
-done
+CONVERTED_SCP_ARG=$(convert_scp_arg "${RAW_ARGV[@]}")
+while IFS= read -r arg; do
+    ARGV+=("${arg}")
+done <<< "${CONVERTED_SCP_ARG}"
 ARGV=("${ARGV[@]:1}")
 
 set +e
-runssh scp -P ${HPCISSH_PORT} ${SSH_BASIC_OPTS} "${ARGV[@]}"
-RESULT=${?}
-verify_hostname $RESULT
+runssh "${SCP_CMD}" -P "${HPCISSH_PORT}" "${SSH_BASIC_OPTS[@]}" "${ARGV[@]}"
+RESULT="${?}"
+verify_hostname "${RESULT}"
 set -e
-exit $RESULT
+exit "${RESULT}"

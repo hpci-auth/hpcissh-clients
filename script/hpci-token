@@ -1,13 +1,11 @@
-#!/bin/bash
+#!@bash_path@
 
 set -eu
 
-CMD_ABS_PATH=`realpath $(which ${0})`
-PARENT_DIR=`dirname ${CMD_ABS_PATH}`
-source ${PARENT_DIR}/hpcissh-lib
+source "${pkglibexecdir:-@pkglibexecdir@}"/hpcissh-lib
 
 load_common_config
 
 # support jwt-agent and oidc-agent
 get_token_ignore_expired
-echo $OIDC_AT
+echo "${OIDC_AT}"

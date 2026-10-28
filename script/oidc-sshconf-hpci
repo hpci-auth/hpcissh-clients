@@ -1,22 +1,21 @@
-#!/bin/bash
+#!@bash_path@
 
 set -eu
 
-CMD_ABS_PATH=`realpath $(which ${0})`
-PARENT_DIR=`dirname ${CMD_ABS_PATH}`
-source ${PARENT_DIR}/hpcissh-lib
+source "${pkglibexecdir:-@pkglibexecdir@}"/hpcissh-lib
 
 load_common_config
 
-ISSUER=${OIDC_ISSUER}
+# shellcheck disable=SC2154
+ISSUER="${OIDC_ISSUER}"
 SCOPES="openid hpci offline_access scitokens"
 AUDIENCE="hpci"
 
-if [ ${#} -eq 0 ];
+if [[ "${#}" -eq 0 ]];
 then
-    CONF_NAME="hpci"
+    CONF_NAME="${OIDC_AGENT_CONF_NAME}"
 else
-    CONF_NAME=${1}
+    CONF_NAME="${1}"
 fi
 
-oidc-sshconf "${ISSUER}" "${SCOPES}" "${AUDIENCE}" "${CONF_NAME}"
+exec "${bindir:-@bindir@}"/oidc-sshconf "${ISSUER}" "${SCOPES}" "${AUDIENCE}" "${CONF_NAME}"

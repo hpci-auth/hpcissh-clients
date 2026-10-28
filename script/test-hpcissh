@@ -1,11 +1,7 @@
-#!/bin/bash
-
-DEBUG=false
+#!@bash_path@
 
 set -eu
-CMD_ABS_PATH=`realpath $(which ${0})`
-PARENT_DIR=`dirname ${CMD_ABS_PATH}`
-source "${PARENT_DIR}/hpcissh-lib"
+source "${pkglibexecdir:-@pkglibexecdir@}"/hpcissh-lib
 
 declare -A FQDN2USERNAME=(
     ["host1"]="user1"
@@ -20,60 +16,74 @@ load_local_accounts() {
 # override the function in hpcissh-lib
 get_local_account() {
     set +u
-    val="${FQDN2USERNAME[$1]}"
+    local val="${FQDN2USERNAME[${1}]}"
     set -u
-    echo $val
+    echo "${val}"
 }
 
 # override the function in hpcissh-lib
 print_args() {
-    local ARGV=("$@")
+    local ARGV=("${@}")
     local first=true
     local arg
     for arg in "${ARGV[@]}"; do
-	if $first; then
+	if [[ "${first}" == "true" ]]; then
 	    first=false
 	else
 	    echo -n " "
 	fi
-	if [[ $arg == *" "* ]]; then
-	    echo -n "\"$arg\""
+	if [[ "${arg}" == *" "* ]]; then
+	    echo -n "\"${arg}\""
 	else
-	    echo -n "$arg"
+	    echo -n "${arg}"
 	fi
     done
     echo
 }
 
 test_common() {
-    local func="$1"
+    local func="${1}"
     shift
-    local expect="$1"
+    local expect="${1}"
     shift
-    local result=`$func "$@"`
-    if [ "$expect" = "$result" ]; then
-	echo "PASS: $@ ==> $expect"
+    local result
+    set +e
+    result=$("${func}" "${@}")
+    local status="${?}"
+    set -e
+    if [[ "${expect}" == "${result}" ]]; then
+	echo "PASS: ${*} ==> ${expect} (status: ${status})"
     else
-	echo "FAIL: $expect != $result"
+	echo "FAIL: expected '${expect}', got '${result}' (status: ${status})"
 	NG=$((NG + 1))
     fi
 }
 
+conv_key_abc() {
+    echo -n abc | conv_key
+}
+
+test_conv_key() {
+    test_common conv_key_abc ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad "test_conv_key"
+}
+
 test_convert_ssh_arg() {
-    test_common convert_ssh_arg "$@"
+    test_common convert_ssh_arg "${@}"
 }
 
 test_convert_scp_arg() {
-    test_common convert_scp_arg "$@"
+    test_common convert_scp_arg "${@}"
 }
 
 test_convert_sftp_arg() {
-    test_common convert_sftp_arg "$@"
+    test_common convert_sftp_arg "${@}"
 }
 
 load_common_config
 
 NG=0
+test_conv_key
+
 test_convert_ssh_arg "ssh user1@host1" ssh host1
 test_convert_ssh_arg "ssh -v user1@host1" ssh -v host1
 test_convert_ssh_arg "ssh -p 2222 user1@host1" ssh -p 2222 host1
@@ -108,6 +118,7 @@ test_convert_scp_arg "scp -v user1@host1:a user2@host2:b host3:c dir" scp -v hos
 test_convert_scp_arg "INVALID SYNTAX" scp
 test_convert_scp_arg "INVALID SYNTAX" scp file
 
+test_convert_sftp_arg "INVALID SYNTAX" sftp
 test_convert_sftp_arg "sftp user1@host1" sftp host1
 test_convert_sftp_arg "sftp -v user1@host1" sftp -v host1
 test_convert_sftp_arg "sftp -P 2222 user1@host1" sftp -P 2222 host1
@@ -116,8 +127,9 @@ test_convert_sftp_arg "sftp user2@host2:file" sftp host2:file
 test_convert_sftp_arg "sftp user2@host2:file file" sftp host2:file file
 test_convert_sftp_arg 'sftp "user2@host2:a b"' sftp "host2:a b"
 test_convert_sftp_arg 'sftp "user2@host2:a b" "c d"' sftp "host2:a b" "c d"
-test_convert_sftp_arg "INVALID SYNTAX" sftp
 
-if [ $NG -gt 0 ]; then
+if [[ "${NG}" -gt 0 ]]; then
+    echo "Some tests failed."
     exit 1
 fi
+echo "All tests passed."

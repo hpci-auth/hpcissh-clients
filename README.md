@@ -1,63 +1,626 @@
 # hpcissh-clients
 
-OAuth-based ssh-client commmands for HPCI
+OAuth-based SSH client toolset for HPCI.
 
-## Parameters
+## Dependencies
 
-for configuration file (~/.hpcissh) or environment variable.
+The following tools are required for the scripts to function:
 
-- OIDC_USERINFO_EXPIRE
-  - lifetime of cached userinfo file (~/.hpcissh.local_accounts)
-  - type: integer (second)
-  - default: 1800
-- USE_JWT_AGENT
-  - If yes, jwt-agent is used in preference to oidc-agent
-  - type: yes or no
-  - default: yes
-- HPCISSH_QUIET
-  - shut up WARNING
-  - type: yes or no
-  - default: no
-- HPCISSH_DEBUG
-  - debug mode
-  - type: yes or no
-  - default: no
-- HPCISSH_DEBUG_X
-  - run with `set -x`
-  - type: yes or no
-  - default: no
-- OIDC_AT_LEAST_VALID_TIME
-  - remaining valid time before using access token
-  - for oidc-agent
-  - type: integer (second)
-  - default: 180
-- OIDC_AGENT_FORWARD
-  - enable forwarding oidc-agent connection
-  - for oidc-agent
-  - type: yes or no
-  - default: yes
-- OIDC_AGENT_CONF_NAME
-  - specify the same as the <conf name> specified for oidc-sshconf
-  - for oidc-agent
-  - type: string
-  - default: hpci
-- OIDC_ISSUER
-  - issuer URL (OpenID provider)
-  - for oidc-agent
-  - type: string
-  - default: (See script/hpcissh-lib)
-- OIDC_USERINFO_ENDPOINT
-  - OpenID userinfo endpoint (URL)
-  - type: string
-  - default: auto (use "iss" + OIDC_USERINFO_ENDPOINT_PATH)
-- OIDC_USERINFO_ENDPOINT_PATH
-  - path of userinfo endpoint
-  - default: (See script/hpcissh-lib)
-- HPCISSH_PORT
-  - port nunmber of hpcissh server
-  - type: integer
-  - default: 2222
-- HPCISSH_TOKEN_INPUT
-  - sshpass or SSH_ASKPASS
-  - type: string
-  - default: sshpass
+- `ssh` (OpenSSH): Standard remote login tool using the SSH protocol.
+- `jq`: JSON processor.
+- `curl`: Tool for transferring data with URLs.
+- `bash` (Version 5 or later): Required to run the shell scripts.
+- `ps`: Used by `hpci-oidc-agent-service`.
+- `jwt-agent`: Token agent for most users.
+  - <https://github.com/oss-tsukuba/jwt-agent>
+- `oidc-agent` (optional): Required when using OIDC-based login and agent forwarding.
+  - <https://github.com/indigo-dc/oidc-agent>
+- `sshpass` (conditionally required): Needed when `HPCISSH_TOKEN_INPUT=sshpass` is used, which is the default.
+
+## Installation
+
+Choose one of the following methods:
+
+- **[Case 1: Container](#case-1-using-container-for-podman-or-docker)** (Recommended): Use Podman or Docker. All dependencies are pre-installed.
+- **[Case 2: macOS Native](#case-2-macos-native-package-via-homebrew)**: Install natively on macOS using Homebrew.
+- **[Case 3: Manual Setup](#case-3-manual-setup)**: Build and install from source manually.
+
+### Case 1: Using Container for Podman (or Docker)
+
+This is the easiest way to get started without manually installing all dependencies.
+
+**Note**: Podman operates without requiring root privileges
+(rootless). In contrast, Docker typically runs with elevated
+privileges. Please ensure you fully understand the security
+implications of these permissions before using Docker.
+
+**Disk Usage**: Using the container image consumes approximately 2 GB of disk space per user.
+
+#### Demo: Deploying with Podman
+
+![demo-podman](./asciinema/podman.gif)
+
+#### OS-specific Podman Setup
+
+- **WSL (Windows 11)**:
+  - Install WSL by following the [official instructions](https://learn.microsoft.com/en-us/windows/wsl/install). The default setup uses WSL 2.
+    - English : <https://learn.microsoft.com/en-us/windows/wsl/install>
+    - Japanese: <https://learn.microsoft.com/ja-jp/windows/wsl/install>
+  - Use Ubuntu running in WSL 2. If you changed the default WSL version, see the WSL documentation for how to check or change the version.
+  - **Prerequisite**: Update to the latest WSL by running `wsl --update` in PowerShell, and then restart it with `wsl --shutdown`.
+  - There are two ways to install Podman.
+    - Please choose one of the following methods.
+  - Option A: Install Podman within Ubuntu on WSL
+    - **Important**: Ensure `systemd` is enabled in your WSL distribution's `/etc/wsl.conf` (`systemd=true` under `[boot]`) and restart WSL (`wsl --shutdown`). Without this, Podman may fail with errors like `mkdir /run/user/1000: permission denied`.
+    - Run `sudo apt-get update && sudo apt-get -y install podman`
+    - Because Podman runs directly inside the WSL Ubuntu environment, `podman machine` is not required.
+  - Option B: Download Podman Installer (Podman CLI for Windows) from <https://podman.io/>
+    - Run the installer and follow the on-screen instructions.
+    - (In Powershell) Run `podman machine init` and `podman machine start`
+- **macOS**:
+  - There are two ways to install Podman.
+    - Please choose one of the following methods.
+  - Option A: Install Podman via Homebrew
+    1. Install Homebrew:
+        - <https://brew.sh/>
+        - macOS Requirements: <https://docs.brew.sh/Installation>
+    2. Run `brew install podman`
+    3. Run `podman machine init && podman machine start`
+  - Option B: Download Podman Installer (Podman CLI for macOS) from <https://podman.io/>
+    - Run the installer and follow the on-screen instructions.
+    - Run `podman machine init && podman machine start`
+  - **Time Sync (macOS)**: If `oidc-agent` fails after waking from sleep, the `podman machine` time might be out of sync. To fix it, run `podman machine ssh sudo chronyc -a makestep`. (Known issue: [#27293](https://github.com/containers/podman/issues/27293))
+- **Linux Distributions**: Install Podman via the package manager
+  - Debian / Ubuntu:
+    - Run `sudo apt-get update && sudo apt-get -y install podman`
+  - RHEL / RHEL-based (AlmaLinux / Rocky Linux / etc.):
+    - Run `sudo dnf -y install podman`
+
+For more details, refer to <https://podman.io/docs/installation>.
+
+#### Managing the Podman Machine (macOS / Windows CLI)
+
+When using the Podman CLI installed on macOS or Windows, `podman machine` is a
+lightweight virtual machine (VM) that runs the Linux environment where Podman
+containers are executed. It is not necessary when Podman is installed and run
+directly in Linux, including Ubuntu running under WSL.
+
+If you do not need to use Podman for a while, you can stop the VM to release
+its CPU and memory resources:
+
+```bash
+podman machine stop
+```
+
+Stopping the machine does not uninstall Podman or remove its images and
+containers. To resume using Podman, start the VM again:
+
+```bash
+podman machine start
+```
+
+You do not need to stop the machine after every container session. Leave it
+running if you will use Podman again soon.
+
+#### Common Procedures for Podman (or Docker)
+
+1. **Start the Container**:
+   Run the following command (it mounts your host's `$HOME` to `/HOST_HOMEDIR`):
+
+    ```bash
+    # Using Podman (recommended):
+    podman run --userns=keep-id --replace \
+      --detach-keys="ctrl-^" \
+      --device /dev/fuse --cap-add SYS_ADMIN --security-opt seccomp=unconfined \
+      --rm -it --init --hostname hpcissh --name hpcissh \
+      --mount type=bind,src=${HOME},dst=/HOST_HOMEDIR \
+      -e USER_UID=$(id -u) \
+      -e USER_GID=$(id -g) \
+      -e USER_NAME=$(id -un) \
+      ghcr.io/hpci-auth/hpcissh-almalinux10:latest
+    ```
+
+    ```bash
+    # If using Docker:
+    docker run \
+      --detach-keys="ctrl-^" \
+      --device /dev/fuse --cap-add SYS_ADMIN --security-opt seccomp=unconfined \
+      --rm -it --init --hostname hpcissh --name hpcissh \
+      --mount type=bind,src=${HOME},dst=/HOST_HOMEDIR \
+      -e USER_UID=$(id -u) \
+      -e USER_GID=$(id -g) \
+      -e USER_NAME=$(id -un) \
+      ghcr.io/hpci-auth/hpcissh-almalinux10:latest
+    ```
+
+    ```powershell
+    # If using Podman in Windows Powershell:
+    PS C:\Users\USERNAME> podman run --userns=keep-id --replace `
+        --detach-keys="ctrl-^" `
+        --device /dev/fuse --cap-add SYS_ADMIN --security-opt seccomp=unconfined `
+        --rm -it --init --hostname hpcissh --name hpcissh `
+        --mount type=bind,src=${HOME},dst=/HOST_HOMEDIR `
+        -e USER_UID=1000 `
+        -e USER_GID=1000 `
+        -e USER_NAME=USERNAME `
+        ghcr.io/hpci-auth/hpcissh-almalinux10:latest
+    ```
+
+    - **Troubleshooting**: If you encounter cgroup-related errors, try adding `--cgroup-manager=cgroupfs` to the `podman run` command.
+    - **Note for WSL**: You can safely ignore the warning message `WARN[0000] "/" is not a shared mount, this could cause issues or missing mounts with rootless containers`.
+
+2. Follow the steps in [Using hpcissh](#using-hpcissh) inside the container.
+3. Type `exit` to quit. The container is automatically removed, and any
+   `jwt-agent` or `oidc-agent` processes running inside the container are also
+   terminated.
+    - **Warning**: Any files stored strictly within the container are volatile and will be deleted automatically.
+      Always copy important data to `~/HOST_HOMEDIR/` for permanent storage.
+
+#### Updating the Container image before starting the container
+
+```bash
+# Using Podman
+podman pull ghcr.io/hpci-auth/hpcissh-almalinux10:latest
+
+# Using Docker
+docker pull ghcr.io/hpci-auth/hpcissh-almalinux10:latest
+```
+
+#### Listing downloaded images
+
+To see a list of container images currently stored on your machine:
+
+```bash
+# Using Podman
+podman image ls
+
+# Using Docker
+docker image ls
+```
+
+#### Cleaning up old images
+
+To save disk space by removing dangling container images that are no longer referenced by a tag:
+
+```bash
+# Using Podman
+podman image prune
+
+# Using Docker
+docker image prune
+```
+
+**Note**: By default, these commands remove dangling images only. They do not remove all unused tagged images.
+
+If you want to remove only the `hpcissh` image explicitly, use the image name instead:
+
+```bash
+# Using Podman
+podman rmi ghcr.io/hpci-auth/hpcissh-almalinux10:latest
+
+# Using Docker
+docker rmi ghcr.io/hpci-auth/hpcissh-almalinux10:latest
+```
+
+Be careful when using broader cleanup options such as `podman image prune -a` or `docker image prune -a`, because they may remove unused tagged images from other projects as well.
+
+#### (Advanced) Building and Customizing the Container Image Locally
+
+To build the container image yourself (e.g., to change dependency versions or add software), use the following commands:
+
+```bash
+cd docker
+podman build -f Dockerfile-almalinux -t hpcissh-almalinux10:localdev \
+  --build-arg OIDC_AGENT_VERSION=?.?.? \
+  --build-arg JWT_AGENT_VERSION=?.?.? \
+  ../
+```
+
+After building, you can start your custom image by replacing the image name in the [starting command](#common-procedures-for-podman-or-docker) with `hpcissh-almalinux10:localdev`.
+
+The container image is kept minimal by design. To add extra packages, you can use `microdnf install <package>` in the `Dockerfile-almalinux` and rebuild the image locally.
+
+---
+
+### Case 2: macOS Native package via Homebrew
+
+#### Demo: Deploying on macOS
+
+![demo-macos](./asciinema/macos.gif)
+
+#### Installing hpcissh for macOS
+
+1. **Install Homebrew**:
+    - <https://brew.sh/>
+    - macOS Requirements: <https://docs.brew.sh/Installation>
+2. **Install hpcissh**:
+
+    ```bash
+    brew tap hpci-auth/tap
+    brew trust --formula hpci-auth/tap/hpcissh
+    brew trust --formula hpci-auth/tap/jwt-agent
+    brew install -y hpcissh
+    ```
+
+3. **(Optional) Install oidc-agent**:
+    - Refer to: <https://indigo-dc.gitbook.io/oidc-agent/intro/macos>
+
+    ```bash
+    brew tap indigo-dc/oidc-agent
+    brew trust --formula indigo-dc/oidc-agent/oidc-agent
+    brew install -y oidc-agent
+    ```
+
+#### Upgrading hpcissh for macOS
+
+```bash
+brew update
+brew upgrade hpcissh
+```
+
+#### Uninstalling hpcissh for macOS
+
+```bash
+brew uninstall hpcissh
+brew untap hpci-auth/tap
+
+brew uninstall oidc-agent
+brew untap indigo-dc/oidc-agent
+```
+
+---
+
+### Case 3: Manual Setup
+
+**Prerequisites**: Ensure all [Dependencies](#dependencies) are installed.
+
+#### Manual Setup: System-wide Installation
+
+(Requires sudo; installs to `/usr/local` by default)
+
+```bash
+make
+sudo make install
+```
+
+#### Manual Setup: User-local Installation
+
+(e.g., to `~/.local`)
+
+```bash
+make build install prefix=$HOME/.local
+```
+
+For macOS:
+
+1. **Install Homebrew** and install bash 5 or later
+2. **Install hpcissh**
+
+```bash
+make build install prefix=$HOME/.local bash_path=$(brew --prefix)/bin/bash
+```
+
+Note: On macOS, the default `/bin/bash` is version 3. Since the scripts require Bash version 5 or later, you must specify the path to a newer Bash version (e.g., installed via Homebrew) using the `bash_path` parameter.
+
+**Apply PATH changes**: Add this to your `~/.bashrc` or `~/.zshrc`:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+To apply immediately, run `export PATH="$HOME/.local/bin:$PATH"`
+
+---
+
+## Using hpcissh
+
+### Step 1: Obtain an Access Token
+
+Choose the agent that fits your workflow. **`jwt-agent` is recommended for most users.**
+
+| Feature / Parameter | `jwt-agent` (Default) | `oidc-agent` |
+| :--- | :--- | :--- |
+| **Max Idle Period** | 1 week | 1 week |
+| **Max Lifetime** | 1 year | 1 week |
+| **Access Token Lifetime** | 600 sec. | 600 sec. |
+| **Agent Forwarding** | No | Yes |
+| **For hpcissh login** | Yes | Yes |
+| **For HPCI Shared Storage** | Yes | No |
+
+#### Option A: Using `jwt-agent`
+
+1. Set `USE_JWT_AGENT=yes` (`yes` is the default) in `~/.hpcissh`.
+2. Log in to the HPCI JWT server: [elpis (main-system)](https://elpis.hpci.nii.ac.jp) or [elpis-c (sub-system)](https://elpis-c.hpci.nii.ac.jp).
+3. Generate a JWT and copy the provided **command line for jwt-agent** and **passphrase** to your clipboard.
+4. Run `jwt-agent -s <JWT_SERVER_URL> -l <USER_NAME>` and enter the **passphrase**.
+5. (Refer to [Step 2: Connect to an SSH Server](#step-2-connect-to-an-ssh-server))
+6. **Stopping the Agent**: Run `jwt-agent --stop`
+
+![demo-jwtagent](./asciinema/jwtagent.gif)
+
+#### Option B: Using `oidc-agent`
+
+1. Set `USE_JWT_AGENT=no` in `~/.hpcissh`.
+2. (Optional) To use sub-system: Set `OIDC_ISSUER="https://metis-c.hpci.nii.ac.jp/auth/realms/HPCI"` in `~/.hpcissh`.
+3. Starting agent: Run the following command to start oidc-agent and set environment variables.
+
+    ```bash
+    eval `hpci-oidc-agent-service use`
+    ```
+
+    **Note for csh/tcsh users**: The command above automatically detects your shell type and outputs `setenv` commands instead of `export`. If the detection fails (e.g., when called from another script), you can force the shell type by setting `HPCISSH_SHELL_TYPE=csh`.
+
+4. Run `oidc-sshconf-hpci` and follow browser prompts.
+    - Enter encryption password (to encrypt the refresh token)
+    - Open the URL displayed on your terminal in a web browser
+    - Enter the code displayed on your terminal
+    - Select your Shibboleth IdP
+    - Log in to your Shibboleth IdP
+    - Enter the one-time code or use your Passkey
+5. (Refer to [Step 2: Connect to an SSH Server](#step-2-connect-to-an-ssh-server))
+6. **Re-authentication**: If your refresh token expires, run `oidc-sshconf-hpci` to log in again.
+
+    *Example of an expired token error and the recovery process:*
+
+    ```bash
+    $ hpcissh host-a
+    ERROR: Command failed (exit 1): 'oidc-token -t 180 hpci'
+    ERROR: (Expired or invalid refresh token)
+    INFO: Run the following commands to log in again:
+    INFO:     $ oidc-sshconf-hpci
+
+    $ oidc-sshconf-hpci
+    Enter decryption password for account config 'hpci': 
+    ERROR: Command failed (exit 1): 'oidc-add --pw-env hpci'
+    Generating account configuration ...
+    accepted
+
+    Using a browser on any device, visit:
+    https://metis.hpci.nii.ac.jp/auth/realms/HPCI/device
+    ...
+    ```
+
+7. **Stopping the Agent**: To terminate the `oidc-agent` session and unset the environment variables in your current shell, run:
+
+    ```bash
+    eval `hpci-oidc-agent-service stop`
+    ```
+
+8. **Deleting Account Configuration**: To completely remove the encrypted refresh token from your local disk (`~/.config/oidc-agent/`), run:
+
+    ```bash
+    $ oidc-gen -d hpci
+    Enter decryption password for account config 'hpci': 
+    Do you really want to delete this configuration? [No/yes/quit]: yes
+    The generated account was successfully removed from oidc-agent. You don't have to run oidc-add.
+    Successfully deleted account configuration.
+    ```
+
+9. **Force Delete (Troubleshooting)**: If you forget your encryption password or the standard delete command fails, you can manually remove the configuration file:
+
+    ```bash
+    rm ~/.config/oidc-agent/hpci
+    ```
+
+![demo-oidcagent](./asciinema/oidcagent.gif)
+
+### Step 2: Connect to an SSH Server
+
+```bash
+# Automatically resolve the remote login name
+hpcissh <HOSTNAME>
+
+# Specify a remote login name
+hpcissh REMOTE_USER@<HOSTNAME>
+```
+
+To log out of the remote machine, run the `exit` command.
+
+If you have `jwt-agent` or `oidc-agent` running, you can also use `hpciscp` and `hpcisftp`.
+
+Their command-line style is close to standard `scp` and `sftp`, but not fully identical in every edge case, because `hpcissh` clients rewrite remote host arguments to resolve the remote login name automatically. For ordinary usage, the standard forms work as expected. If you use complex option combinations or unusual argument ordering, using `HPCISSH_AUTO_LOGIN_NAME=no` and explicitly specifying `REMOTE_USER@HOST` is recommended.
+
+### Note: Using `hpciscp` in the Container
+
+In the container-based setup, your host OS's home directory is mounted at `~/HOST_HOMEDIR/` inside the container. You can use this directory to transfer files between the remote server and your host machine.
+
+Example: To download `/path/to/myfile.txt` from the remote server to your host's `~/Downloads/myfile.txt`:
+
+```bash
+hpciscp <HOSTNAME>:/path/to/myfile.txt ~/HOST_HOMEDIR/Downloads/myfile.txt
+```
+
+Example: To upload `~/myfile.txt` from your host to the remote server's `/path/to/myfile.txt`:
+
+```bash
+hpciscp ~/HOST_HOMEDIR/myfile.txt <HOSTNAME>:/path/to/myfile.txt
+```
+
+**Warning**: Any files stored strictly within the container's internal filesystem are volatile and will be deleted automatically when the container exits. Always copy important data to `~/HOST_HOMEDIR/` for permanent storage.
+
+### Note: Using `sshfs` in the Container
+
+The mount point must be created in the container's internal filesystem. FUSE-mounted files cannot be accessed from the host through `~/HOST_HOMEDIR/`.
+
+```bash
+mkdir <Local directory>  # e.g., /tmp/sshfs
+sshfs -o ssh_command=hpcissh <HOSTNAME>:<Remote directory> <Local directory>
+```
+
+To unmount the mount point:
+
+```bash
+fusermount3 -u <Local directory>
+```
+
+### Note: Post-Quantum Key Exchange Warning
+
+You may see the following warning when using the `hpcissh` command:
+
+```text
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+```
+
+This is a precautionary message from your SSH client (on your local PC) indicating that the remote server has not yet adopted post-quantum key exchange algorithms. It highlights potential long-term risks but does **not** imply an immediate security compromise of your current connection.
+
+There are no immediate security concerns. This warning will be resolved as servers are upgraded to support newer standards. No action or configuration changes are required on your part. You may proceed with the connection as usual, even if this message appears.
+
+### Commands Summary
+
+- `hpcissh`: Secure Shell client for HPCI
+- `hpciscp`: Secure copy (scp compatible)
+- `hpcisftp`: Secure FTP (sftp compatible)
+- `hpcissh-config-show`: Display current configuration
+- `hpcissh-append-ssh-ca`: Manage SSH CA for HPCI
+- `hpcissh-version`: Show the hpcissh-clients version and the local SSH client version
+- `hpci-oidc-agent-service`: Service wrapper for oidc-agent
+- `oidc-sshconf-hpci`: Configure HPCI issuer profile for oidc-agent
+- `hpci-token`: Display current JWT
+- `hpci-parse-token`: Parse and display JWT claims
+- `hpci-get-userinfo`: Retrieve OIDC user information from the server
+
+---
+
+## Configurations
+
+### Configurable Parameters for hpcissh and related commands
+
+Customize via environment variables or `~/.hpcissh`.
+Run `hpcissh-config-show` to display the current effective values.
+
+Note:
+
+- `~/.hpcissh` is parsed as simple `KEY=VALUE` lines.
+- Shell syntax is not supported.
+
+| Parameter | Description (`Default value`) |
+| :--- | :--- |
+| `USE_JWT_AGENT` | Use `jwt-agent` instead of `oidc-agent` (`yes`) |
+| `HPCISSH_DEBUG` | Enable debug mode (`no`) |
+| `HPCISSH_DEBUG_X` | Run scripts with `set -x` (`no`) |
+| `HPCISSH_QUIET` | Suppress warning messages (`no`) |
+| `HPCISSH_PORT` | Destination SSH port (`2222`) |
+| `HPCISSH_AUTO_KNOWN_HOSTS` | Automatically use the bundled HPCI SSH CA public key (`yes`) |
+| `HPCISSH_AUTO_LOGIN_NAME` | Automatically resolve remote login name (`yes`) |
+| `HPCISSH_SHELL_TYPE` | Manually specify shell type: `csh` or `sh`. If empty, it's automatically detected from the parent process. (`<empty>`) |
+| `HPCISSH_TOKEN_INPUT` | Token input method: `sshpass` or `SSH_ASKPASS` (`sshpass`) |
+| `OIDC_ISSUER` | OpenID Connect issuer URL for `oidc-agent` (`https://metis.hpci.nii.ac.jp/auth/realms/HPCI`) |
+| `OIDC_AGENT_FORWARD` | Enable `oidc-agent` forwarding (`yes`) |
+| `OIDC_AGENT_OPTS` | Options for `oidc-agent` via `hpci-oidc-agent-service` (`--no-autoreauthenticate --no-autoload`) |
+| `OIDC_AGENT_CONF_NAME` | Account config name for `oidc-agent` (`hpci`) |
+| `OIDC_AGENT_USE_PW_ENV` | Use `--pw-env` for `oidc-gen` and `oidc-add` to suppress GUI prompts (`yes`) |
+| `OIDC_AT_LEAST_VALID_TIME` | Minimum required validity for an access token used via `oidc-agent` (`180` sec.) |
+| `OIDC_USERINFO_EXPIRE` | Cache lifetime of downloaded user info (`1800` sec.) |
+| `OIDC_USERINFO_ENDPOINT` | Full URL of the userinfo endpoint. If set, `OIDC_USERINFO_ENDPOINT_PATH` is ignored (`<empty>`) |
+| `OIDC_USERINFO_ENDPOINT_PATH` | Path of the userinfo endpoint (`/protocol/openid-connect/userinfo`) |
+
+### SSH CA (Public Key) for HPCI
+
+No changes are needed for the default configuration.
+
+By default, `hpcissh` uses the bundled HPCI SSH CA public key automatically to verify SSH servers. Manual setup is only necessary if automatic known-host handling is disabled.
+
+To append the CA key manually:
+
+```bash
+# System-wide
+sudo hpcissh-append-ssh-ca --system --update
+
+# User-specific
+hpcissh-append-ssh-ca --user --update
+```
+
+### Issuer Profiles for oidc-agent
+
+**No changes needed** for default settings.
+
+The following files are managed automatically by `hpci-oidc-agent-service`:
+
+- **For oidc-agent v4**: `~/.config/oidc-agent/pubclients.config`
+- **For oidc-agent v5**: `~/.config/oidc-agent/issuer.config.d/hpci-main` and `hpci-sub`
+
+---
+
+## For Developers
+
+### Development and release workflow
+
+1. Create a working branch from `develop` and make changes on that branch.
+2. Run the tests described below, then merge the working branch into `develop`.
+3. Immediately before release, update the VERSION number in
+   `script/hpcissh-lib` and keep `RELNOTE.md` in sync and commit that update
+   to `develop`.
+4. Open a pull request to merge `develop` into `main`.
+5. Merge the pull request after review. GitHub Actions builds and publishes the
+   container image automatically; see
+   [GitHub Actions](#github-actions-container-image-builds) for details.
+6. Create a release from the repository's GitHub Releases page, using the
+   `vX.Y.Z` tag. See [GitHub Actions](#github-actions-container-image-builds)
+   for the image tags this publishes.
+7. Update the Homebrew tap for the release. See the
+   [homebrew-tap instructions](https://github.com/hpci-auth/homebrew-tap) for
+   the procedure.
+
+### GitHub Actions: Container image builds
+
+GitHub Actions builds and tests the container image:
+
+- When changes are pushed to `develop`,
+  `ghcr.io/hpci-auth/hpcissh-almalinux10:develop` is published automatically.
+- When changes are pushed to another branch, the image is built and tested but
+  not published.
+- After a pull request is merged into `main`,
+  `ghcr.io/hpci-auth/hpcissh-almalinux10:main` is published automatically.
+- After merging a release into `main`, push its `vX.Y.Z` release tag to publish
+  images tagged `X.Y.Z` and `X.Y`. For the stable `v1.*` release line, this
+  also publishes `ghcr.io/hpci-auth/hpcissh-almalinux10:latest`.
+- Pull requests run tests without publishing container images.
+
+### Testing
+
+#### Offline testing
+
+Note for macOS:
+The built-in `/bin/bash` is old for these scripts. Always specify a newer Bash, for example:
+
+```bash
+bash_path=$(brew --prefix)/bin/bash
+```
+
+```bash
+# For Linux:
+make build install test clean uninstall prefix=$(pwd)/LOCAL
+
+# For macOS:
+make build install test clean uninstall prefix=$(pwd)/LOCAL bash_path=$(brew --prefix)/bin/bash
+```
+
+#### Online testing (requires active agents)
+
+```bash
+# (Run jwt-agent and oidc-agent before testing)
+# jwt-agent ...
+# eval `hpci-oidc-agent-service use`
+# oidc-sshconf-hpci
+# ...
+
+# Prepare for Linux:
+make build install prefix=$(pwd)/LOCAL
+
+# Prepare for macOS:
+make build install prefix=$(pwd)/LOCAL bash_path=$(brew --prefix)/bin/bash
+
+# Run tests
+./run-tests.sh --prefix $(pwd)/LOCAL <TARGET_HOSTNAME>
+./run-tests.sh --prefix $(pwd)/LOCAL <TARGET_HOSTNAME> --run
+```
+
+#### Container testing
+
+```bash
+cd docker
+make build
+make test
+```
